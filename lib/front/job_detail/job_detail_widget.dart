@@ -349,23 +349,27 @@ class _JobDetailWidgetState extends State<JobDetailWidget> {
                                                 ),
                                                 FFButtonWidget(
                                                   onPressed: () async {
-                                                    context.pushNamed(
-                                                      ApplyForJobWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'jobPostDoc':
-                                                            serializeParam(
-                                                          jobDetailJobPostingsRecord,
-                                                          ParamType.Document,
-                                                        ),
-                                                      }.withoutNulls,
-                                                      extra: <String, dynamic>{
-                                                        'jobPostDoc':
+                                                    // Conditional navigation based on login state
+                                                    if (currentUser != null && currentUser!.loggedIn) {
+                                                      context.pushNamed(
+                                                        ApplyForJobWidget.routeName,
+                                                        queryParameters: {
+                                                          'jobPostDoc': serializeParam(
                                                             jobDetailJobPostingsRecord,
-                                                      },
-                                                    );
+                                                            ParamType.Document,
+                                                          ),
+                                                        }.withoutNulls,
+                                                        extra: <String, dynamic>{
+                                                          'jobPostDoc': jobDetailJobPostingsRecord,
+                                                        },
+                                                      );
+                                                    } else {
+                                                      context.pushNamed(Auth3LoginWidget.routeName);
+                                                    }
                                                   },
-                                                  text: 'Apply Now',
+                                                  text: (currentUser != null && currentUser!.loggedIn)
+                                                      ? 'Apply Now'
+                                                      : 'Login/Register to Apply',
                                                   options: FFButtonOptions(
                                                     height: 30.0,
                                                     padding:
@@ -1901,23 +1905,27 @@ class _JobDetailWidgetState extends State<JobDetailWidget> {
                                                 ),
                                                 FFButtonWidget(
                                                   onPressed: () async {
-                                                    context.pushNamed(
-                                                      ApplyForJobWidget
-                                                          .routeName,
-                                                      queryParameters: {
-                                                        'jobPostDoc':
-                                                            serializeParam(
-                                                          jobDetailJobPostingsRecord,
-                                                          ParamType.Document,
-                                                        ),
-                                                      }.withoutNulls,
-                                                      extra: <String, dynamic>{
-                                                        'jobPostDoc':
+                                                    // Conditional navigation based on login state
+                                                    if (currentUser != null && currentUser!.loggedIn) {
+                                                      context.pushNamed(
+                                                        ApplyForJobWidget.routeName,
+                                                        queryParameters: {
+                                                          'jobPostDoc': serializeParam(
                                                             jobDetailJobPostingsRecord,
-                                                      },
-                                                    );
+                                                            ParamType.Document,
+                                                          ),
+                                                        }.withoutNulls,
+                                                        extra: <String, dynamic>{
+                                                          'jobPostDoc': jobDetailJobPostingsRecord,
+                                                        },
+                                                      );
+                                                    } else {
+                                                      context.pushNamed(Auth3LoginWidget.routeName);
+                                                    }
                                                   },
-                                                  text: 'Apply Now',
+                                                  text: (currentUser != null && currentUser!.loggedIn)
+                                                      ? 'Apply Now'
+                                                      : 'Login/Register to Apply',
                                                   options: FFButtonOptions(
                                                     height: 35.0,
                                                     padding:

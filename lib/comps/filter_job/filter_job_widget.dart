@@ -45,6 +45,8 @@ class _FilterJobWidgetState extends State<FilterJobWidget> {
         ExpandableController(initialExpanded: false);
     _model.expandableExpandableController4 =
         ExpandableController(initialExpanded: false);
+    _model.locationTextController ??= TextEditingController();
+    _model.locationFocusNode ??= FocusNode();
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
@@ -678,115 +680,83 @@ class _FilterJobWidgetState extends State<FilterJobWidget> {
                     thickness: 2.0,
                     color: FlutterFlowTheme.of(context).alternate,
                   ),
-                  Container(
-                    decoration: BoxDecoration(),
+                  // Location Text Field
+                  Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
                     child: Container(
-                      width: double.infinity,
-                      color: Color(0x00000000),
-                      child: ExpandableNotifier(
-                        controller: _model.expandableExpandableController4,
-                        child: ExpandablePanel(
-                          header: Text(
-                            'Order By',
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  font: GoogleFonts.inter(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .fontStyle,
-                                ),
-                          ),
-                          collapsed: Container(),
-                          expanded: Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(
-                                10.0, 0.0, 0.0, 0.0),
-                            child: FlutterFlowRadioButton(
-                              options:
-                                  ['Latest', 'Featured', 'Popular'].toList(),
-                              onChanged: (val) => safeSetState(() {}),
-                              controller: _model.radioButtonValueController ??=
-                                  FormFieldController<String>(null),
-                              optionHeight: 32.0,
-                              textStyle: FlutterFlowTheme.of(context)
-                                  .labelMedium
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .labelMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .labelMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .labelMedium
-                                        .fontStyle,
-                                  ),
-                              selectedTextStyle: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
-                              buttonPosition: RadioButtonPosition.left,
-                              direction: Axis.vertical,
-                              radioButtonColor:
-                                  FlutterFlowTheme.of(context).primary,
-                              inactiveRadioButtonColor:
-                                  FlutterFlowTheme.of(context).secondaryText,
-                              toggleable: false,
-                              horizontalAlignment: WrapAlignment.start,
-                              verticalAlignment: WrapCrossAlignment.start,
+                      width: MediaQuery.sizeOf(context).width * 0.65,
+                      child: TextFormField(
+                        controller: _model.locationTextController,
+                        focusNode: _model.locationFocusNode,
+                        obscureText: false,
+                        decoration: InputDecoration(
+                          labelText: 'Location',
+                          labelStyle: FlutterFlowTheme.of(context).labelMedium.override(
+                                letterSpacing: 0.0,
+                              ),
+                          hintText: 'Enter city or region...',
+                          hintStyle: FlutterFlowTheme.of(context).labelMedium.override(
+                                letterSpacing: 0.0,
+                              ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).alternate,
+                              width: 1.0,
                             ),
+                            borderRadius: BorderRadius.circular(6.0),
                           ),
-                          theme: ExpandableThemeData(
-                            tapHeaderToExpand: true,
-                            tapBodyToExpand: true,
-                            tapBodyToCollapse: true,
-                            headerAlignment: ExpandablePanelHeaderAlignment.top,
-                            hasIcon: true,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).primary,
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(6.0),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).error,
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(6.0),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).error,
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(6.0),
+                          ),
+                          filled: true,
+                          fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                          prefixIcon: Icon(
+                            Icons.location_on_outlined,
+                            color: FlutterFlowTheme.of(context).customColor2,
                           ),
                         ),
+                        style: FlutterFlowTheme.of(context).bodyMedium.override(
+                              letterSpacing: 0.0,
+                            ),
+                        validator: _model.locationTextControllerValidator.asValidator(context),
                       ),
                     ),
                   ),
-                  Expanded(
+                  // Removed Order By Expandable
+                  Padding( // Added Padding to push button to bottom
+                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0), // Add some top padding
                     child: Align(
-                      alignment: AlignmentDirectional(-1.0, -1.0),
+                      alignment: AlignmentDirectional(0.0, 1.0), // Align to bottom center
                       child: FFButtonWidget(
                         onPressed: () {
-                          print('Button pressed ...');
+                          final filterData = {
+                            'keywords': _model.searchTextController.text,
+                            'categoryName': _model.jobCategoryValue,
+                            'experience': _model.experienceValue,
+                            'workType': _model.workTypeValue,
+                            'location': _model.locationTextController.text,
+                          };
+                          Navigator.pop(context, filterData);
                         },
-                        text: 'Reset Filter',
+                        text: 'Apply Filters',
                         options: FFButtonOptions(
                           width: MediaQuery.sizeOf(context).width * 0.65,
                           height: 30.0,

@@ -35,7 +35,12 @@ class FilterJobModel extends FlutterFlowModel<FilterJobWidget> {
   late ExpandableController expandableExpandableController4;
 
   // State field(s) for RadioButton widget.
-  FormFieldController<String>? radioButtonValueController;
+  FormFieldController<String>? radioButtonValueController; // This seems to be for 'Order By', will be removed from UI
+
+  // Added for Location
+  FocusNode? locationFocusNode;
+  TextEditingController? locationTextController;
+  String? Function(BuildContext, String?)? locationTextControllerValidator;
 
   @override
   void initState(BuildContext context) {}
@@ -49,6 +54,8 @@ class FilterJobModel extends FlutterFlowModel<FilterJobWidget> {
     expandableExpandableController2.dispose();
     expandableExpandableController3.dispose();
     expandableExpandableController4.dispose();
+    locationFocusNode?.dispose();
+    locationTextController?.dispose();
   }
 
   /// Additional helper methods.

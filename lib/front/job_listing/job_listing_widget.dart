@@ -35,6 +35,43 @@ class _JobListingWidgetState extends State<JobListingWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  Stream<List<JobPostingsRecord>> _buildFilteredStream() {
+    Query<Map<String, dynamic>> query =
+        FirebaseFirestore.instance.collection('Job_Postings');
+
+    // Apply category filter
+    if (_model.currentCategoryRef != null) {
+      query = query.where('categoryRef', isEqualTo: _model.currentCategoryRef);
+    }
+
+    // Apply experience filter
+    if (_model.experienceValue != null && _model.experienceValue!.isNotEmpty) {
+      query = query.where('experienceLevel', isEqualTo: _model.experienceValue);
+    }
+
+    // Apply work type filter
+    if (_model.workTypeValue != null && _model.workTypeValue!.isNotEmpty) {
+      query = query.where('jobType', isEqualTo: _model.workTypeValue);
+    }
+
+    // Apply location filter (exact match for now)
+    if (_model.initialLocation != null && _model.initialLocation!.isNotEmpty) {
+      query = query.where('location', isEqualTo: _model.initialLocation);
+    }
+
+    // Apply sorting
+    if (_model.currentSortField != null && _model.currentSortField!.isNotEmpty) {
+      query = query.orderBy(_model.currentSortField!, descending: _model.isSortDescending);
+    } else {
+      // Default sort if no specific sort field is set
+      query = query.orderBy('posted_at', descending: true);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((d) => JobPostingsRecord.fromSnapshot(d))
+        .toList());
+  }
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +79,48 @@ class _JobListingWidgetState extends State<JobListingWidget> {
 
     _model.searchTextController ??= TextEditingController();
     _model.searchFocusNode ??= FocusNode();
+
+    // Retrieve and apply initial query parameters
+    _model.initialKeywords = FFRouter.getParameter(context, 'keywords');
+    _model.initialExperience = FFRouter.getParameter(context, 'experience');
+    _model.initialLocation = FFRouter.getParameter(context, 'location');
+    _model.initialCategoryRefString = FFRouter.getParameter(context, 'categoryRef');
+
+    if (_model.initialKeywords != null) {
+      _model.searchTextController?.text = _model.initialKeywords!;
+    }
+    if (_model.initialExperience != null) {
+      _model.experienceValue = _model.initialExperience;
+      // Ensure the controller is initialized before setting its value if it's created on demand
+      _model.experienceValueController ??= FormFieldController<String>(_model.initialExperience);
+      _model.experienceValueController?.value = _model.initialExperience;
+    }
+
+    if (_model.initialCategoryRefString != null && _model.initialCategoryRefString!.isNotEmpty) {
+      try {
+        _model.initialCategoryRefDoc = FirebaseFirestore.instance.doc(_model.initialCategoryRefString!);
+        _model.currentCategoryRef = _model.initialCategoryRefDoc;
+        // Fetch the category document to set the dropdown name
+        _model.initialCategoryRefDoc!.get().then((docSnapshot) {
+          if (docSnapshot.exists) {
+            final categoryData = docSnapshot.data() as Map<String, dynamic>;
+            final categoryName = categoryData['name'] as String?;
+            if (categoryName != null) {
+              safeSetState(() {
+                _model.jobCategoryValue = categoryName;
+                _model.jobCategoryValueController ??= FormFieldController<String>(categoryName);
+                _model.jobCategoryValueController?.value = categoryName;
+                // Also update selectedCat for consistency if it's used directly
+                _model.selectedCat = JobCategoriesRecord.getDocumentFromData(categoryData, docSnapshot.reference);
+              });
+            }
+          }
+        });
+      } catch (e) {
+        print('Error parsing initialCategoryRefDoc: $e');
+        // Handle error, maybe log it or set a default
+      }
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
@@ -56,10 +135,7 @@ class _JobListingWidgetState extends State<JobListingWidget> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<JobPostingsRecord>>(
-      stream: queryJobPostingsRecord(
-        queryBuilder: (jobPostingsRecord) =>
-            jobPostingsRecord.orderBy('posted_at'),
-      ),
+      stream: _buildFilteredStream(),
       builder: (context, snapshot) {
         // Customize what your widget looks like when it's loading.
         if (!snapshot.hasData) {
@@ -251,22 +327,29 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                                       .map((e) => e.name)
                                                       .toList(),
                                               onChanged: (val) async {
-                                                safeSetState(() => _model
-                                                    .jobCategoryValue = val);
-                                                _model.selectedCat =
-                                                    await queryJobCategoriesRecordOnce(
-                                                  queryBuilder:
-                                                      (jobCategoriesRecord) =>
-                                                          jobCategoriesRecord
-                                                              .where(
-                                                    'name',
-                                                    isEqualTo:
-                                                        _model.jobCategoryValue,
-                                                  ),
-                                                  singleRecord: true,
-                                                ).then((s) => s.firstOrNull);
-
-                                                safeSetState(() {});
+                                                safeSetState(() {
+                                                  _model.jobCategoryValue = val;
+                                                  if (val == null || val.isEmpty) {
+                                                    _model.currentCategoryRef = null;
+                                                    _model.selectedCat = null;
+                                                  } else {
+                                                    // This part assumes jobCategoryJobCategoriesRecordList is available
+                                                    // or we fetch based on name.
+                                                    // The original code fetches based on name after selection.
+                                                    // We need to ensure currentCategoryRef is set.
+                                                    final selectedCategoryDoc = jobCategoryJobCategoriesRecordList.firstWhereOrNull((doc) => doc.name == val);
+                                                    if (selectedCategoryDoc != null) {
+                                                      _model.currentCategoryRef = selectedCategoryDoc.reference;
+                                                      _model.selectedCat = selectedCategoryDoc;
+                                                    } else {
+                                                      // Fallback if not found in the list, though ideally it should be
+                                                      _model.currentCategoryRef = null;
+                                                      _model.selectedCat = null;
+                                                    }
+                                                  }
+                                                });
+                                                // Trigger rebuild for the stream
+                                                setState(() {});
                                               },
                                               width: MediaQuery.sizeOf(context)
                                                       .width *
@@ -392,7 +475,7 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                         FlutterFlowDropDown<String>(
                                           controller: _model
                                                   .experienceValueController ??=
-                                              FormFieldController<String>(null),
+                                              FormFieldController<String>(_model.experienceValue), // Ensure controller has initial value
                                           options: [
                                             'No Experience',
                                             'Internship & Graduate',
@@ -401,8 +484,11 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                             'Senior Level',
                                             'Executive Level'
                                           ],
-                                          onChanged: (val) => safeSetState(() =>
-                                              _model.experienceValue = val),
+                                          onChanged: (val) {
+                                            safeSetState(() => _model.experienceValue = val);
+                                            // Trigger rebuild for the stream
+                                            setState(() {});
+                                          },
                                           width:
                                               MediaQuery.sizeOf(context).width *
                                                   0.17,
@@ -463,7 +549,7 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                         FlutterFlowDropDown<String>(
                                           controller: _model
                                                   .workTypeValueController ??=
-                                              FormFieldController<String>(null),
+                                              FormFieldController<String>(_model.workTypeValue), // Ensure controller has initial value
                                           options: [
                                             'Full Time',
                                             'Part Time',
@@ -472,8 +558,11 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                             'Temporary',
                                             'Remote'
                                           ],
-                                          onChanged: (val) => safeSetState(
-                                              () => _model.workTypeValue = val),
+                                          onChanged: (val) {
+                                            safeSetState(() => _model.workTypeValue = val);
+                                            // Trigger rebuild for the stream
+                                            setState(() {});
+                                          },
                                           width:
                                               MediaQuery.sizeOf(context).width *
                                                   0.17,
@@ -691,33 +780,20 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                         ),
                                         FFButtonWidget(
                                           onPressed: () async {
-                                            await queryJobPostingsRecordOnce()
-                                                .then(
-                                                  (records) => _model
-                                                          .simpleSearchResults =
-                                                      TextSearch(
-                                                    records
-                                                        .map(
-                                                          (record) =>
-                                                              TextSearchItem
-                                                                  .fromTerms(
-                                                                      record, [
-                                                            record.title,
-                                                            record.description
-                                                          ]),
-                                                        )
-                                                        .toList(),
-                                                  )
-                                                          .search(_model
-                                                              .searchTextController
-                                                              .text)
-                                                          .map((r) => r.object)
-                                                          .toList(),
-                                                )
-                                                .onError((_, __) => _model
-                                                    .simpleSearchResults = [])
-                                                .whenComplete(
-                                                    () => safeSetState(() {}));
+                                            // The text search should operate on the currently filtered list from StreamBuilder
+                                            final currentRecords = snapshot.data ?? jobListingJobPostingsRecordList;
+                                            if (_model.searchTextController.text.isEmpty) {
+                                               _model.simpleSearchResults = List.from(currentRecords);
+                                            } else {
+                                              _model.simpleSearchResults = TextSearch(
+                                                currentRecords
+                                                    .map(
+                                                      (record) => TextSearchItem.fromTerms(record, [record.title, record.description, record.location]),
+                                                    )
+                                                    .toList(),
+                                              ).search(_model.searchTextController.text).map((r) => r.object).toList();
+                                            }
+                                            safeSetState(() {});
                                           },
                                           text: 'Search',
                                           options: FFButtonOptions(
@@ -826,7 +902,10 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                           ),
                                           FFButtonWidget(
                                             onPressed: () {
-                                              print('Button pressed ...');
+                                              safeSetState(() {
+                                                _model.currentSortField = 'posted_at';
+                                                _model.isSortDescending = true;
+                                              });
                                             },
                                             text: 'Newest',
                                             options: FFButtonOptions(
@@ -879,7 +958,10 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                           ),
                                           FFButtonWidget(
                                             onPressed: () {
-                                              print('Button pressed ...');
+                                              safeSetState(() {
+                                                _model.currentSortField = 'posted_at';
+                                                _model.isSortDescending = false;
+                                              });
                                             },
                                             text: 'Oldest',
                                             options: FFButtonOptions(
@@ -932,7 +1014,10 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                           ),
                                           FFButtonWidget(
                                             onPressed: () {
-                                              print('Button pressed ...');
+                                              safeSetState(() {
+                                                _model.currentSortField = 'isFeatured'; // Assuming 'isFeatured' field exists
+                                                _model.isSortDescending = true;
+                                              });
                                             },
                                             text: 'Featured',
                                             options: FFButtonOptions(
@@ -985,7 +1070,27 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                           ),
                                           FFButtonWidget(
                                             onPressed: () {
-                                              print('Button pressed ...');
+                                              safeSetState(() {
+                                                _model.jobCategoryValue = null;
+                                                _model.jobCategoryValueController?.clear();
+                                                _model.selectedCat = null;
+                                                _model.currentCategoryRef = null;
+
+                                                _model.experienceValue = null;
+                                                _model.experienceValueController?.clear();
+
+                                                _model.workTypeValue = null;
+                                                _model.workTypeValueController?.clear();
+
+                                                _model.searchTextController?.clear();
+                                                _model.simpleSearchResults = [];
+
+                                                // Reset initial parameters used by stream builder if they affect it directly
+                                                _model.initialLocation = null; // If used directly by stream for filtering
+
+                                                _model.currentSortField = 'posted_at'; // Default sort
+                                                _model.isSortDescending = true;
+                                              });
                                             },
                                             text: 'Clear',
                                             options: FFButtonOptions(
@@ -1094,8 +1199,43 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                                     ),
                                                   );
                                                 },
-                                              ).then((value) =>
-                                                  safeSetState(() {}));
+                                              ).then((value) async {
+                                                safeSetState(() {});
+                                                if (value != null && value is Map<String, dynamic>) {
+                                                  final filterData = value;
+                                                  _model.searchTextController.text = filterData['keywords'] ?? '';
+                                                  _model.experienceValue = filterData['experience'];
+                                                  _model.workTypeValue = filterData['workType'];
+                                                  _model.initialLocation = filterData['location']; // Used by _buildFilteredStream
+
+                                                  final categoryName = filterData['categoryName'] as String?;
+                                                  if (categoryName != null && categoryName.isNotEmpty) {
+                                                    _model.jobCategoryValue = categoryName;
+                                                    // Query for the category reference
+                                                    final catDoc = await queryJobCategoriesRecordOnce(
+                                                      queryBuilder: (jc) => jc.where('name', isEqualTo: categoryName),
+                                                      singleRecord: true,
+                                                    ).then((s) => s.firstOrNull);
+                                                    if (catDoc != null) {
+                                                      _model.selectedCat = catDoc;
+                                                      _model.currentCategoryRef = catDoc.reference;
+                                                    } else {
+                                                      _model.selectedCat = null;
+                                                      _model.currentCategoryRef = null;
+                                                    }
+                                                  } else {
+                                                    _model.jobCategoryValue = null;
+                                                    _model.selectedCat = null;
+                                                    _model.currentCategoryRef = null;
+                                                  }
+                                                  // Ensure UI controllers are also updated if they are not directly bound via _model values for their initial values
+                                                  _model.jobCategoryValueController?.value = _model.jobCategoryValue;
+                                                  _model.experienceValueController?.value = _model.experienceValue;
+                                                  _model.workTypeValueController?.value = _model.workTypeValue;
+
+                                                  safeSetState(() {}); // Trigger rebuild
+                                                }
+                                              });
                                             },
                                             text: 'Search Filter',
                                             options: FFButtonOptions(
@@ -1173,53 +1313,39 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                     ),
                                     child: Padding(
                                       padding: EdgeInsets.all(10.0),
-                                      child:
-                                          StreamBuilder<List<JobPostsRecord>>(
-                                        stream: queryJobPostsRecord(),
-                                        builder: (context, snapshot) {
-                                          // Customize what your widget looks like when it's loading.
-                                          if (!snapshot.hasData) {
-                                            return Center(
-                                              child: SizedBox(
-                                                width: 40.0,
-                                                height: 40.0,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                          Color>(
-                                                    FlutterFlowTheme.of(context)
-                                                        .customColor2,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                          List<JobPostsRecord>
-                                              gridViewJobPostsRecordList =
-                                              snapshot.data!;
+                                      child: Builder(builder: (context) {
+                                        final List<JobPostingsRecord> jobListToDisplay;
+                                        if (_model.simpleSearchResults.isNotEmpty || _model.searchTextController.text.isNotEmpty) {
+                                          jobListToDisplay = _model.simpleSearchResults;
+                                        } else {
+                                          // Use the data from the main StreamBuilder snapshot
+                                          jobListToDisplay = snapshot.data ?? jobListingJobPostingsRecordList;
+                                        }
+                                        final gridViewJobPostsRecordList = jobListToDisplay;
 
-                                          return GridView.builder(
-                                            padding: EdgeInsets.zero,
-                                            gridDelegate:
-                                                SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 3,
-                                              crossAxisSpacing: 10.0,
-                                              mainAxisSpacing: 10.0,
-                                              childAspectRatio: 1.5,
-                                            ),
-                                            primary: false,
-                                            shrinkWrap: true,
-                                            scrollDirection: Axis.vertical,
-                                            itemCount:
-                                                gridViewJobPostsRecordList
-                                                    .length,
-                                            itemBuilder:
-                                                (context, gridViewIndex) {
-                                              final gridViewJobPostsRecord =
-                                                  gridViewJobPostsRecordList[
-                                                      gridViewIndex];
-                                              return Container(
+                                        if (gridViewJobPostsRecordList.isEmpty) {
+                                          return Center(child: Text('No jobs found matching your criteria.'));
+                                        }
+                                        return GridView.builder(
+                                          padding: EdgeInsets.zero,
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3,
+                                            crossAxisSpacing: 10.0,
+                                            mainAxisSpacing: 10.0,
+                                            childAspectRatio: 1.5,
+                                          ),
+                                          primary: false,
+                                          shrinkWrap: true,
+                                          scrollDirection: Axis.vertical,
+                                          itemCount:
+                                              gridViewJobPostsRecordList.length,
+                                          itemBuilder:
+                                              (context, gridViewIndex) {
+                                            final gridViewJobPostsRecord =
+                                                gridViewJobPostsRecordList[
+                                                    gridViewIndex];
+                                            return Container(
                                                 width: double.infinity,
                                                 height: double.infinity,
                                                 decoration: BoxDecoration(
@@ -1657,8 +1783,8 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                               );
                                             },
                                           );
-                                        },
-                                      ),
+                                        );
+                                      }),
                                     ),
                                   ),
                                 ),
@@ -1689,11 +1815,17 @@ class _JobListingWidgetState extends State<JobListingWidget> {
                                         padding: EdgeInsets.all(10.0),
                                         child: Builder(
                                           builder: (context) {
-                                            final jobM =
-                                                jobListingJobPostingsRecordList
-                                                    .map((e) => e)
-                                                    .toList();
+                                            final List<JobPostingsRecord> jobListToDisplay;
+                                            if (_model.simpleSearchResults.isNotEmpty || _model.searchTextController.text.isNotEmpty) {
+                                              jobListToDisplay = _model.simpleSearchResults;
+                                            } else {
+                                              jobListToDisplay = jobListingJobPostingsRecordList;
+                                            }
+                                            final jobM = jobListToDisplay;
 
+                                            if (jobM.isEmpty) {
+                                              return Center(child: Text('No jobs found matching your criteria.'));
+                                            }
                                             return GridView.builder(
                                               padding: EdgeInsets.zero,
                                               gridDelegate:
