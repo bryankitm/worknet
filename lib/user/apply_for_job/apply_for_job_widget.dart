@@ -3,6 +3,7 @@ import '/backend/backend.dart';
 import '/backend/firebase_storage/storage.dart';
 import '/comps/side_bar/side_bar_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_radio_button.dart'; // Added for RadioButton
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/flutter_flow/upload_data.dart';
@@ -44,7 +45,51 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
     super.initState();
     _model = createModel(context, () => ApplyForJobModel());
 
+    // Initialize CV selection fields from model defaults and user document
+    _model.cvOptionController = FormFieldController<String>(_model.cvOption);
+    _model.userUploadedCvUrl = currentUserDocument?.cvUrl ?? '';
+    _model.userUploadedCvName = currentUserDocument?.cvFilename ?? '';
+
+    // If cvFilename is empty but cvUrl is not, try to derive a name or use a placeholder
+    if (_model.userUploadedCvName.isEmpty && _model.userUploadedCvUrl.isNotEmpty) {
+      try {
+        Uri uri = Uri.parse(_model.userUploadedCvUrl);
+        // Get the last path segment, attempt to decode, and ensure it ends with .pdf (or is a fallback)
+        String pathSegment = uri.pathSegments.lastWhere(
+          (segment) => segment.toLowerCase().endsWith('.pdf'),
+          orElse: () => 'Uploaded CV.pdf' // Fallback if no .pdf segment found
+        );
+        _model.userUploadedCvName = Uri.decodeFull(pathSegment);
+      } catch (e) {
+        // If URI parsing or segment extraction fails, use a generic placeholder
+        _model.userUploadedCvName = 'Uploaded CV.pdf';
+      }
+    }
+    _checkIfBookmarked(); // Call new function to check bookmark status
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+  }
+
+  Future<void> _checkIfBookmarked() async {
+    if (widget.jobPostDoc == null || currentUserReference == null) {
+      return;
+    }
+    final existingBookmark = await queryBookmarkedJobsRecordOnce(
+      queryBuilder: (bookmarkedJobsRecord) => bookmarkedJobsRecord
+          .where('userId', isEqualTo: currentUserReference)
+          .where('job_id', isEqualTo: widget.jobPostDoc?.reference),
+      singleRecord: true,
+    );
+    if (existingBookmark.isNotEmpty) {
+      _model.isJobBookmarked = true;
+    } else {
+      _model.isJobBookmarked = false;
+    }
+    // No need for safeSetState here if called from initState before build,
+    // but if called later, it would be needed.
+    // For safety in FlutterFlow context, often good to have it if UI depends on this.
+    if (mounted) {
+      safeSetState(() {});
+    }
   }
 
   @override
@@ -69,6 +114,26 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
           child: Scaffold(
             key: scaffoldKey,
             backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+            appBar: उत्तर प्रदेश माध्यमिक शिक्षा परिषद् // Using a common breakpoint for medium screens and below
+                (MediaQuery.sizeOf(context).width < kBreakpointMedium)
+                ? AppBar(
+                    backgroundColor: FlutterFlowTheme.of(context).primary,
+                    automaticallyImplyLeading: true, // Shows back button
+                    title: Text(
+                      'Apply for Job',
+                      style: FlutterFlowTheme.of(context).headlineMedium.override(
+                            fontFamily: FlutterFlowTheme.of(context).headlineMediumFamily,
+                            color: Colors.white,
+                            fontSize: 22.0,
+                            letterSpacing: 0.0,
+                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).headlineMediumFamily),
+                          ),
+                    ),
+                    actions: [],
+                    centerTitle: false, // Aligns title to the left for typical mobile UX
+                    elevation: 2.0,
+                  )
+                : null,
             body: SafeArea(
               top: true,
               child: Row(
@@ -99,10 +164,17 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
                             children: [
                               StickyHeader(
                                 overlapHeaders: false,
-                                header: wrapWithModel(
-                                  model: _model.headerModel,
-                                  updateCallback: () => safeSetState(() {}),
-                                  child: HeaderWidget(),
+                                header: responsiveVisibility( // Hide HeaderWidget on smaller screens
+                                  context: context,
+                                  phone: false,
+                                  tablet: false,
+                                  tabletLandscape: false, // Ensure it's hidden on tablet landscape as well
+                                  desktop: true,
+                                  child: wrapWithModel(
+                                    model: _model.headerModel,
+                                    updateCallback: () => safeSetState(() {}),
+                                    child: HeaderWidget(),
+                                  ),
                                 ),
                                 content: Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
@@ -222,65 +294,44 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
                                                         highlightColor:
                                                             Colors.transparent,
                                                         onTap: () async {
-                                                          _model.queriedJob =
-                                                              await queryBookmarkedJobsRecordOnce(
-                                                            queryBuilder:
-                                                                (bookmarkedJobsRecord) =>
-                                                                    bookmarkedJobsRecord
-                                                                        .where(
-                                                              'job_id',
-                                                              isEqualTo: widget
-                                                                  .jobPostDoc
-                                                                  ?.reference,
-                                                            ),
-                                                            singleRecord: true,
-                                                          ).then((s) => s
-                                                                  .firstOrNull);
-                                                          if (_model.queriedJob
-                                                                  ?.reference !=
-                                                              null) {
-                                                            await BookmarkedJobsRecord
-                                                                .collection
-                                                                .doc()
-                                                                .set(
-                                                                    createBookmarkedJobsRecordData(
-                                                                  userId:
-                                                                      currentUserReference,
-                                                                  jobId: widget
-                                                                      .jobPostDoc
-                                                                      ?.reference,
-                                                                  savedDate:
-                                                                      getCurrentTimestamp,
-                                                                ));
+                                                          if (widget.jobPostDoc == null || currentUserReference == null) {
+                                                            return;
+                                                          }
+                                                          // Toggle bookmark state
+                                                          if (_model.isJobBookmarked) {
+                                                            // Already bookmarked, so un-bookmark
+                                                            final existingBookmarks = await queryBookmarkedJobsRecordOnce(
+                                                              queryBuilder: (bookmarkedJobsRecord) => bookmarkedJobsRecord
+                                                                  .where('userId', isEqualTo: currentUserReference)
+                                                                  .where('job_id', isEqualTo: widget.jobPostDoc?.reference),
+                                                              // singleRecord: true, // Firestore query for delete might need to fetch all matches if any duplicates by mistake
+                                                            );
+                                                            for (var doc in existingBookmarks) {
+                                                              await doc.reference.delete();
+                                                            }
+                                                            _model.isJobBookmarked = false;
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              SnackBar(content: Text('Job unbookmarked!')),
+                                                            );
                                                           } else {
-                                                            await showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (alertDialogContext) {
-                                                                return AlertDialog(
-                                                                  title: Text(
-                                                                      'Job Already Bookmarked'),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                      onPressed:
-                                                                          () =>
-                                                                              Navigator.pop(alertDialogContext),
-                                                                      child: Text(
-                                                                          'Ok'),
-                                                                    ),
-                                                                  ],
-                                                                );
-                                                              },
+                                                            // Not bookmarked, so bookmark it
+                                                            await BookmarkedJobsRecord.collection.doc().set(createBookmarkedJobsRecordData(
+                                                              userId: currentUserReference,
+                                                              jobId: widget.jobPostDoc?.reference,
+                                                              savedDate: getCurrentTimestamp,
+                                                            ));
+                                                            _model.isJobBookmarked = true;
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              SnackBar(content: Text('Job bookmarked!')),
                                                             );
                                                           }
-
                                                           safeSetState(() {});
                                                         },
                                                         child: Icon(
-                                                          Icons.bookmark_border,
-                                                          color: FlutterFlowTheme
-                                                                  .of(context)
-                                                              .primary,
+                                                          _model.isJobBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                                          color: _model.isJobBookmarked
+                                                              ? FlutterFlowTheme.of(context).primary
+                                                              : FlutterFlowTheme.of(context).secondaryText, // More distinct color for bookmarked state
                                                           size: 24.0,
                                                         ),
                                                       ),
@@ -1397,62 +1448,94 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
                                                             context)
                                                         .alternate,
                                                   ),
+                                                  // CV Selection Radio Buttons
                                                   Padding(
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(0.0, 20.0,
-                                                                0.0, 0.0),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.max,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          'Upload CV / Resume',
-                                                          style: FlutterFlowTheme
-                                                                  .of(context)
-                                                              .titleMedium
-                                                              .override(
-                                                                font: GoogleFonts
-                                                                    .interTight(
-                                                                  fontWeight: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleMedium
-                                                                      .fontWeight,
-                                                                  fontStyle: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleMedium
-                                                                      .fontStyle,
-                                                                ),
-                                                                letterSpacing:
-                                                                    0.0,
-                                                                fontWeight: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontWeight,
-                                                                fontStyle: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontStyle,
-                                                              ),
-                                                        ),
-                                                      ],
+                                                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 10.0),
+                                                    child: FlutterFlowRadioButton(
+                                                      options: [
+                                                        'Use My Built Profile (Recommended)',
+                                                        if (_model.userUploadedCvUrl.isNotEmpty)
+                                                          'Use My Uploaded CV (${_model.userUploadedCvName})'
+                                                        else
+                                                          'Use My Uploaded CV (No CV on profile)', // Disabled state text
+                                                        'Upload a New CV for This Application'
+                                                      ].toList().cast<String>(),
+                                                      onChanged: (val) => safeSetState(() => _model.cvOption = (val == 'Use My Built Profile (Recommended)'
+                                                          ? 'profile'
+                                                          : (val!.startsWith('Use My Uploaded CV') ? 'uploadedCV' : 'newCV'))),
+                                                      controller: _model.cvOptionController ??= FormFieldController<String>(_model.cvOption == 'profile'
+                                                          ? 'Use My Built Profile (Recommended)'
+                                                          : (_model.cvOption == 'uploadedCV'
+                                                              ? (_model.userUploadedCvUrl.isNotEmpty ? 'Use My Uploaded CV (${_model.userUploadedCvName})' : 'Use My Uploaded CV (No CV on profile)')
+                                                              : 'Upload a New CV for This Application')),
+                                                      optionHeight: 32.0,
+                                                      textStyle: FlutterFlowTheme.of(context).labelMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).labelMediumFamily,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).labelMediumFamily),
+                                                          ),
+                                                      selectedTextStyle: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                          ),
+                                                      buttonPosition: RadioButtonPosition.left,
+                                                      direction: Axis.vertical,
+                                                      radioButtonColor: FlutterFlowTheme.of(context).primary,
+                                                      inactiveRadioButtonColor: FlutterFlowTheme.of(context).secondaryText,
+                                                      toggleable: false,
+                                                      horizontalAlignment: WrapAlignment.start,
+                                                      verticalAlignment: WrapCrossAlignment.start,
                                                     ),
                                                   ),
-                                                  Divider(
-                                                    thickness: 2.0,
-                                                    color: FlutterFlowTheme.of(
-                                                            context)
-                                                        .alternate,
+                                                  // Conditionally display current CV name if that option is chosen
+                                                  if (_model.cvOption == 'uploadedCV' && _model.userUploadedCvUrl.isNotEmpty)
+                                                    Padding(
+                                                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 10.0),
+                                                      child: Text(
+                                                        'Using CV: ${_model.userUploadedCvName}',
+                                                        style: FlutterFlowTheme.of(context).bodySmall.override(
+                                                              fontFamily: FlutterFlowTheme.of(context).bodySmallFamily,
+                                                              color: FlutterFlowTheme.of(context).secondaryText,
+                                                              letterSpacing: 0.0,
+                                                              useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodySmallFamily),
+                                                            ),
+                                                      ),
+                                                    ),
+
+                                                  // Original "Upload CV / Resume" title, now conditional or could be removed
+                                                  Visibility(
+                                                    visible: _model.cvOption == 'newCV',
+                                                    child: Padding(
+                                                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 0.0),
+                                                      child: Row(
+                                                        mainAxisSize: MainAxisSize.max,
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            'Upload New CV / Resume', // Title changed for clarity
+                                                            style: FlutterFlowTheme.of(context).titleMedium.override(
+                                                                  fontFamily: FlutterFlowTheme.of(context).titleMediumFamily,
+                                                                  letterSpacing: 0.0,
+                                                                  useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleMediumFamily),
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
                                                   ),
-                                                  Padding(
-                                                    padding:
-                                                        EdgeInsetsDirectional
-                                                            .fromSTEB(0.0, 20.0,
-                                                                0.0, 0.0),
-                                                    child: Row(
+                                                  Visibility(
+                                                    visible: _model.cvOption == 'newCV',
+                                                    child: Divider(
+                                                      thickness: 2.0,
+                                                      color: FlutterFlowTheme.of(context).alternate,
+                                                    ),
+                                                  ),
+                                                  Visibility(
+                                                    visible: _model.cvOption == 'newCV',
+                                                    child: Padding(
+                                                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                                                      child: Row(
                                                       mainAxisSize:
                                                           MainAxisSize.max,
                                                       children: [
@@ -1638,32 +1721,14 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
                                                               .spaceBetween,
                                                       children: [
                                                         Text(
-                                                          'Cover Letter',
+                                                            'Cover Letter (Optional)', // Updated Label
                                                           style: FlutterFlowTheme
                                                                   .of(context)
                                                               .titleMedium
                                                               .override(
-                                                                font: GoogleFonts
-                                                                    .interTight(
-                                                                  fontWeight: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleMedium
-                                                                      .fontWeight,
-                                                                  fontStyle: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleMedium
-                                                                      .fontStyle,
-                                                                ),
-                                                                letterSpacing:
-                                                                    0.0,
-                                                                fontWeight: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontWeight,
-                                                                fontStyle: FlutterFlowTheme.of(
-                                                                        context)
-                                                                    .titleMedium
-                                                                    .fontStyle,
+                                                                  fontFamily: FlutterFlowTheme.of(context).titleMediumFamily,
+                                                                  letterSpacing: 0.0,
+                                                                  useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleMediumFamily),
                                                               ),
                                                         ),
                                                       ],
@@ -1731,8 +1796,17 @@ class _ApplyForJobWidgetState extends State<ApplyForJobWidget> {
                                                       getCurrentTimestamp,
                                                   coverLetter:
                                                       FFAppState().htmlContent,
-                                                  cv: _model
-                                                      .uploadedFileUrl_uploadData27c,
+                                                  cv: _model.cvOption == 'profile'
+                                                      ? 'PROFILE_DATA' // Placeholder for profile data
+                                                      : (_model.cvOption == 'uploadedCV'
+                                                          ? _model.userUploadedCvUrl
+                                                          : _model.uploadedFileUrl_uploadData27c),
+                                                  cvName: _model.cvOption == 'profile'
+                                                      ? 'Profile Data'
+                                                      : (_model.cvOption == 'uploadedCV'
+                                                          ? _model.userUploadedCvName
+                                                          : (_model.uploadedLocalFile_uploadData27c.name ?? 'Uploaded_CV.pdf')),
+                                                  appliedWith: _model.cvOption, // Store how it was applied
                                                 ));
                                             unawaited(
                                               () async {

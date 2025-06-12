@@ -49,6 +49,13 @@ class CareerProfileModel extends FlutterFlowModel<CareerProfileWidget> {
   // State field(s) for PDF generation
   bool isGeneratingPdf = false;
 
+  // Fields for AI Resume Analysis
+  int resumeScore = 0;
+  List<Map<String, String>> resumeSuggestions = [];
+  DateTime? lastAnalyzedTimestamp;
+  bool isAnalyzingResume = false;
+  bool analysisPerformed = false;
+
   @override
   void initState(BuildContext context) {
     headerMainModel = createModel(context, () => HeaderMainModel());

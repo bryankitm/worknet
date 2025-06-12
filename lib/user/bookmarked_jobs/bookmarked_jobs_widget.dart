@@ -83,6 +83,26 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
               child: Scaffold(
                 key: scaffoldKey,
                 backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+                appBar: उत्तर प्रदेश माध्यमिक शिक्षा परिषद् // Using a common breakpoint for medium screens and below
+                    (MediaQuery.sizeOf(context).width < kBreakpointMedium)
+                    ? AppBar(
+                        backgroundColor: FlutterFlowTheme.of(context).primary,
+                        automaticallyImplyLeading: true, // Shows back button if needed by navigation stack
+                        title: Text(
+                          'Bookmarked Jobs',
+                          style: FlutterFlowTheme.of(context).headlineMedium.override(
+                                fontFamily: FlutterFlowTheme.of(context).headlineMediumFamily,
+                                color: Colors.white,
+                                fontSize: 22.0,
+                                letterSpacing: 0.0,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).headlineMediumFamily),
+                              ),
+                        ),
+                        actions: [],
+                        centerTitle: false,
+                        elevation: 2.0,
+                      )
+                    : null,
                 drawer: Drawer(
                   elevation: 16.0,
                   child: wrapWithModel(
@@ -118,10 +138,17 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
                               children: [
-                                wrapWithModel(
+                              responsiveVisibility(
+                                context: context,
+                                phone: false,
+                                tablet: false,
+                                tabletLandscape: false,
+                                desktop: true,
+                                child: wrapWithModel(
                                   model: _model.headerModel,
                                   updateCallback: () => safeSetState(() {}),
                                   child: HeaderWidget(),
+                                ),
                                 ),
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
@@ -215,7 +242,7 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                               .primary
                                                           : FlutterFlowTheme.of(
                                                                   context)
-                                                              .primaryText,
+                                                              .secondaryText, // Corrected inactive color
                                                       size: 28.0,
                                                     ),
                                                   ),
@@ -253,7 +280,7 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                               .primary
                                                           : FlutterFlowTheme.of(
                                                                   context)
-                                                              .primaryText,
+                                                              .secondaryText, // Corrected inactive color
                                                       size: 28.0,
                                                     ),
                                                   ),
@@ -275,6 +302,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                       .map((e) => e)
                                                       .toList();
 
+                                              if (jobList.isEmpty) {
+                                                return Padding(
+                                                  padding: EdgeInsets.only(top: MediaQuery.sizeOf(context).height * 0.2),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'You have no bookmarked jobs yet.',
+                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                            color: FlutterFlowTheme.of(context).secondaryText,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
                                               return ListView.builder(
                                                 padding: EdgeInsets.zero,
                                                 primary: false,
@@ -529,14 +572,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                                 await jobListItem
                                                                     .reference
                                                                     .delete();
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                      'Job unbookmarked successfully!',
+                                                                      style: TextStyle(
+                                                                        color: FlutterFlowTheme.of(context).info,
+                                                                      ),
+                                                                    ),
+                                                                    backgroundColor: FlutterFlowTheme.of(context).success,
+                                                                  ),
+                                                                );
                                                               }
                                                             },
                                                             child: Icon(
-                                                              Icons
-                                                                  .bookmark_border_sharp,
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .customColor2,
+                                                              Icons.bookmark, // Changed icon
+                                                              color: FlutterFlowTheme.of(context).primary, // Changed color
                                                               size: 24.0,
                                                             ),
                                                           ),
@@ -561,6 +612,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                       .map((e) => e)
                                                       .toList();
 
+                                              if (jobListGrid.isEmpty) { // Empty state for Grid view
+                                                return Padding(
+                                                  padding: EdgeInsets.only(top: MediaQuery.sizeOf(context).height * 0.2),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'You have no bookmarked jobs yet.',
+                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                            color: FlutterFlowTheme.of(context).secondaryText,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
                                               return GridView.builder(
                                                 padding: EdgeInsets.zero,
                                                 gridDelegate:
@@ -811,14 +878,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                                       await jobListGridItem
                                                                           .reference
                                                                           .delete();
+                                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                                        SnackBar(
+                                                                          content: Text(
+                                                                            'Job unbookmarked successfully!',
+                                                                            style: TextStyle(
+                                                                              color: FlutterFlowTheme.of(context).info,
+                                                                            ),
+                                                                          ),
+                                                                          backgroundColor: FlutterFlowTheme.of(context).success,
+                                                                        ),
+                                                                      );
                                                                     }
                                                                   },
                                                                   child: Icon(
-                                                                    Icons
-                                                                        .bookmark_border_outlined,
-                                                                    color: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .customColor2,
+                                                                    Icons.bookmark, // Changed icon
+                                                                    color: FlutterFlowTheme.of(context).primary, // Changed color
                                                                     size: 24.0,
                                                                   ),
                                                                 ),
@@ -891,7 +966,7 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                               .primary
                                                           : FlutterFlowTheme.of(
                                                                   context)
-                                                              .primaryText,
+                                                              .secondaryText, // Corrected inactive color
                                                       size: 28.0,
                                                     ),
                                                   ),
@@ -929,7 +1004,7 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                               .primary
                                                           : FlutterFlowTheme.of(
                                                                   context)
-                                                              .primaryText,
+                                                              .secondaryText, // Corrected inactive color
                                                       size: 28.0,
                                                     ),
                                                   ),
@@ -951,6 +1026,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                       .map((e) => e)
                                                       .toList();
 
+                                              if (jobList.isEmpty) { // Empty state for desktop list view
+                                                return Padding(
+                                                  padding: EdgeInsets.only(top: MediaQuery.sizeOf(context).height * 0.2),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'You have no bookmarked jobs yet.',
+                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                            color: FlutterFlowTheme.of(context).secondaryText,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
                                               return ListView.builder(
                                                 padding: EdgeInsets.zero,
                                                 primary: false,
@@ -1346,14 +1437,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                                 await jobListItem
                                                                     .reference
                                                                     .delete();
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                      'Job unbookmarked successfully!',
+                                                                      style: TextStyle(
+                                                                        color: FlutterFlowTheme.of(context).info,
+                                                                      ),
+                                                                    ),
+                                                                    backgroundColor: FlutterFlowTheme.of(context).success,
+                                                                  ),
+                                                                );
                                                               }
                                                             },
                                                             child: Icon(
-                                                              Icons
-                                                                  .bookmark_border_rounded,
-                                                              color: FlutterFlowTheme
-                                                                      .of(context)
-                                                                  .customColor2,
+                                                              Icons.bookmark, // Changed icon
+                                                              color: FlutterFlowTheme.of(context).primary, // Changed color
                                                               size: 24.0,
                                                             ),
                                                           ),
@@ -1376,6 +1475,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                       .map((e) => e)
                                                       .toList();
 
+                                              if (jobListGrid.isEmpty) { // Empty state for desktop grid view
+                                                return Padding(
+                                                  padding: EdgeInsets.only(top: MediaQuery.sizeOf(context).height * 0.2),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'You have no bookmarked jobs yet.',
+                                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                            color: FlutterFlowTheme.of(context).secondaryText,
+                                                            letterSpacing: 0.0,
+                                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }
                                               return GridView.builder(
                                                 padding: EdgeInsets.zero,
                                                 gridDelegate:
@@ -1744,14 +1859,22 @@ class _BookmarkedJobsWidgetState extends State<BookmarkedJobsWidget> {
                                                                       await jobListGridItem
                                                                           .reference
                                                                           .delete();
+                                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                                        SnackBar(
+                                                                          content: Text(
+                                                                            'Job unbookmarked successfully!',
+                                                                            style: TextStyle(
+                                                                              color: FlutterFlowTheme.of(context).info,
+                                                                            ),
+                                                                          ),
+                                                                          backgroundColor: FlutterFlowTheme.of(context).success,
+                                                                        ),
+                                                                      );
                                                                     }
                                                                   },
                                                                   child: Icon(
-                                                                    Icons
-                                                                        .bookmark_border_rounded,
-                                                                    color: FlutterFlowTheme.of(
-                                                                            context)
-                                                                        .customColor2,
+                                                                    Icons.bookmark, // Changed icon
+                                                                    color: FlutterFlowTheme.of(context).primary, // Changed icon color
                                                                     size: 24.0,
                                                                   ),
                                                                 ),

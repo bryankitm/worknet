@@ -14,6 +14,10 @@ class MessagesModel extends FlutterFlowModel<MessagesWidget> {
   // Model for SideBar component.
   late SideBarModel sideBarModel2;
 
+  // Added for chat loading state
+  bool isLoadingChats = false;
+  // List<ChatsRecord> chatConversations = []; // Optional: StreamBuilder's snapshot can be used directly
+
   @override
   void initState(BuildContext context) {
     sideBarModel1 = createModel(context, () => SideBarModel());

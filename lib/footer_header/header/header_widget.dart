@@ -1,4 +1,5 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/comps/notification_bell_icon/notification_bell_icon_widget.dart'; // Added
 import '/comps/notifications_dropdown/notifications_dropdown_widget.dart';
 import '/comps/side_nav/side_nav_widget.dart';
 import '/comps/side_nav_mobile/side_nav_mobile_widget.dart';
@@ -272,10 +273,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                                           animationType:
                                               badges.BadgeAnimationType.scale,
                                           toAnimate: true,
-                                          child: Icon(
+                                          child: Icon( // This was the old static notification icon
                                             Icons.work_outline_rounded,
                                             color: Color(0xFF57636C),
-                                            size: 20.0,
+                                            size: 20.0
                                           ),
                                         ),
                                       ],
@@ -283,6 +284,19 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                                   ),
                                 ),
                               ),
+                              // Replace static notification with dynamic NotificationBellIconWidget
+                              if (loggedIn)
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 8.0, 0.0),
+                                  child: wrapWithModel(
+                                    model: _model.notificationBellIconModel, // Will be initialized in model file
+                                    updateCallback: () => safeSetState(() {}),
+                                    child: NotificationBellIconWidget(
+                                      iconColor: FlutterFlowTheme.of(context).secondaryText,
+                                      iconSize: 24.0, // Adjusted size
+                                    ),
+                                  ),
+                                ),
                               if (loggedIn)
                                 Builder(
                                   builder: (context) => AuthUserStreamWidget(
@@ -680,6 +694,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                                 ),
                               ),
                             ),
+                            // NotificationBellIconWidget is already added before the user avatar for desktop
                             Container(
                               decoration: BoxDecoration(
                                 color: FlutterFlowTheme.of(context)

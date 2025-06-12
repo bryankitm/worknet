@@ -183,6 +183,149 @@ class _SideBarWidgetState extends State<SideBarWidget> {
                         ),
                       ),
                     ),
+                    // Add Notifications Link here
+                    if (loggedIn)
+                      StreamBuilder<int>(
+                        stream: _model.unreadNotificationsCountStream,
+                        builder: (context, snapshot) {
+                          final unreadCount = snapshot.data ?? 0;
+                          final bool hasUnread = unreadCount > 0;
+                          final bool isNotificationsPage = widget.page == UserNotificationsWidget.routeName;
+                          return InkWell(
+                            splashColor: Colors.transparent,
+                            focusColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            onTap: () async {
+                              context.pushNamed(UserNotificationsWidget.routeName);
+                            },
+                            child: Container(
+                              height: 50.0,
+                              decoration: BoxDecoration(
+                                color: isNotificationsPage
+                                    ? FlutterFlowTheme.of(context).secondaryBackground
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.only(
+                                  bottomLeft: Radius.circular(8.0),
+                                  bottomRight: Radius.circular(0.0),
+                                  topLeft: Radius.circular(8.0),
+                                  topRight: Radius.circular(0.0),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(10.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
+                                      child: Icon(
+                                        hasUnread ? Icons.notifications_active_outlined : Icons.notifications_none_outlined,
+                                        color: isNotificationsPage
+                                            ? FlutterFlowTheme.of(context).primary
+                                            : FlutterFlowTheme.of(context).primaryText,
+                                        size: 18.0,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Notifications',
+                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            color: isNotificationsPage
+                                                ? FlutterFlowTheme.of(context).primary
+                                                : FlutterFlowTheme.of(context).primaryText,
+                                            fontSize: 13.0,
+                                            letterSpacing: 0.0,
+                                            fontWeight: FontWeight.w600,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                    ),
+                                    if (hasUnread)
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
+                                        child: Container(
+                                          padding: EdgeInsets.all(4.0),
+                                          decoration: BoxDecoration(
+                                            color: FlutterFlowTheme.of(context).error,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Text(
+                                            unreadCount.toString(),
+                                            style: FlutterFlowTheme.of(context).bodySmall.override(
+                                                  fontFamily: FlutterFlowTheme.of(context).bodySmallFamily,
+                                                  color: FlutterFlowTheme.of(context).onError,
+                                                  fontSize: 10.0,
+                                                  letterSpacing: 0.0,
+                                                  useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodySmallFamily),
+                                                ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    // My Interviews Link
+                    if (loggedIn && (valueOrDefault(currentUserDocument?.role, '') == 'User'))
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () async {
+                          context.pushNamed(UserInterviewScheduleWidget.routeName);
+                        },
+                        child: Container(
+                          height: 50.0,
+                          decoration: BoxDecoration(
+                            color: widget.page == UserInterviewScheduleWidget.routeName
+                                ? FlutterFlowTheme.of(context).secondaryBackground
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(8.0),
+                              bottomRight: Radius.circular(0.0),
+                              topLeft: Radius.circular(8.0),
+                              topRight: Radius.circular(0.0),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(10.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
+                                  child: Icon(
+                                    Icons.event_available_outlined, // Or Icons.calendar_today_outlined
+                                    color: widget.page == UserInterviewScheduleWidget.routeName
+                                        ? FlutterFlowTheme.of(context).primary
+                                        : FlutterFlowTheme.of(context).primaryText,
+                                    size: 18.0,
+                                  ),
+                                ),
+                                Text(
+                                  'My Interviews',
+                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                        fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                        color: widget.page == UserInterviewScheduleWidget.routeName
+                                            ? FlutterFlowTheme.of(context).primary
+                                            : FlutterFlowTheme.of(context).primaryText,
+                                        fontSize: 13.0,
+                                        letterSpacing: 0.0,
+                                        fontWeight: FontWeight.w600,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    // End My Interviews Link
                     InkWell(
                       splashColor: Colors.transparent,
                       focusColor: Colors.transparent,
@@ -249,6 +392,63 @@ class _SideBarWidgetState extends State<SideBarWidget> {
                         ),
                       ),
                     ),
+                    // My Interviews Link for mobile drawer
+                    if (loggedIn && (valueOrDefault(currentUserDocument?.role, '') == 'User'))
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () async {
+                          context.pushNamed(UserInterviewScheduleWidget.routeName);
+                        },
+                        child: Container(
+                          height: 50.0,
+                          decoration: BoxDecoration(
+                            color: widget.page == UserInterviewScheduleWidget.routeName
+                                ? FlutterFlowTheme.of(context).secondaryBackground
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(8.0),
+                              bottomRight: Radius.circular(0.0),
+                              topLeft: Radius.circular(8.0),
+                              topRight: Radius.circular(0.0),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(10.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
+                                  child: Icon(
+                                    Icons.event_available_outlined,
+                                    color: widget.page == UserInterviewScheduleWidget.routeName
+                                        ? FlutterFlowTheme.of(context).primary
+                                        : FlutterFlowTheme.of(context).primaryText,
+                                    size: 18.0,
+                                  ),
+                                ),
+                                Text(
+                                  'My Interviews',
+                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                        fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                        color: widget.page == UserInterviewScheduleWidget.routeName
+                                            ? FlutterFlowTheme.of(context).primary
+                                            : FlutterFlowTheme.of(context).primaryText,
+                                        fontSize: 13.0,
+                                        letterSpacing: 0.0,
+                                        fontWeight: FontWeight.w600,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    // End My Interviews Link for mobile drawer
                     if (valueOrDefault(currentUserDocument?.role, '') == 'Hr')
                       AuthUserStreamWidget(
                         builder: (context) => InkWell(

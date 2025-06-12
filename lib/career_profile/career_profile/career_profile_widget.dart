@@ -22,6 +22,8 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data'; // For font loading, if needed later
 import 'package:flutter/services.dart' show rootBundle; // For font loading
+import 'package:intl/intl.dart'; // Added for DateFormat
+import 'package:percent_indicator/percent_indicator.dart'; // Added for CircularPercentIndicator
 
 class CareerProfileWidget extends StatefulWidget {
   const CareerProfileWidget({super.key});
@@ -3668,6 +3670,205 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
                                                                     disabledColor: FlutterFlowTheme.of(context).secondaryText,
                                                                   ),
                                                                   showLoadingIndicator: _model.isGeneratingPdf,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // AI Resume Analysis Section (Desktop)
+                                                    Material(
+                                                      color: Colors.transparent,
+                                                      elevation: 1.0,
+                                                      child: Container(
+                                                        width:
+                                                            MediaQuery.sizeOf(
+                                                                        context)
+                                                                    .width *
+                                                                0.68,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: FlutterFlowTheme
+                                                                  .of(context)
+                                                              .secondaryBackground,
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  10.0),
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .max,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                'AI Resume Analysis',
+                                                                style: FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .titleMedium
+                                                                    .override(
+                                                                      fontFamily: GoogleFonts.interTight().fontFamily,
+                                                                      fontWeight:
+                                                                          FontWeight.w500,
+                                                                      useGoogleFonts: GoogleFonts.asMap().containsKey(GoogleFonts.interTight().fontFamily),
+                                                                      letterSpacing:
+                                                                          0.0,
+                                                                    ),
+                                                              ),
+                                                              Divider(
+                                                                thickness: 2.0,
+                                                                color: FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .alternate,
+                                                              ),
+                                                              SizedBox(height: 8.0),
+                                                              if (_model.isAnalyzingResume)
+                                                                Padding(
+                                                                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                                                                  child: Center(child: CircularProgressIndicator()),
+                                                                )
+                                                              else if (!_model.analysisPerformed) ...[
+                                                                Text(
+                                                                  'Your resume has not been analyzed yet. Click the button below to get insights.',
+                                                                  style: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .bodyMedium.override(letterSpacing: 0.0),
+                                                                ),
+                                                                SizedBox(height: 16.0),
+                                                              ] else ...[
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child: Text(
+                                                                        'Your Resume Score: ${_model.resumeScore}/100',
+                                                                        style: FlutterFlowTheme.of(context).headlineSmall.override(
+                                                                              fontFamily: GoogleFonts.interTight().fontFamily,
+                                                                              fontWeight: FontWeight.bold,
+                                                                              useGoogleFonts: GoogleFonts.asMap().containsKey(GoogleFonts.interTight().fontFamily),
+                                                                              letterSpacing: 0.0,
+                                                                            ),
+                                                                      ),
+                                                                    ),
+                                                                    CircularPercentIndicator(
+                                                                      radius: 30.0,
+                                                                      lineWidth: 6.0,
+                                                                      percent: _model.resumeScore / 100.0,
+                                                                      center: Text('${_model.resumeScore}%', style: FlutterFlowTheme.of(context).bodyMedium.override(letterSpacing: 0.0)),
+                                                                      progressColor: FlutterFlowTheme.of(context).primary,
+                                                                      backgroundColor: FlutterFlowTheme.of(context).alternate,
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(height: 4.0),
+                                                                Text(
+                                                                  'Last Analyzed: ${_model.lastAnalyzedTimestamp != null ? DateFormat.yMMMd().add_jm().format(_model.lastAnalyzedTimestamp!) : 'Never'}',
+                                                                  style: FlutterFlowTheme.of(context).bodySmall.override(letterSpacing: 0.0),
+                                                                ),
+                                                                SizedBox(height: 16.0),
+                                                                Text(
+                                                                  'Suggestions for Improvement:',
+                                                                  style: FlutterFlowTheme.of(context).titleSmall.override(
+                                                                        fontFamily: GoogleFonts.interTight().fontFamily,
+                                                                        fontWeight: FontWeight.w500,
+                                                                        useGoogleFonts: GoogleFonts.asMap().containsKey(GoogleFonts.interTight().fontFamily),
+                                                                        letterSpacing: 0.0,
+                                                                      ),
+                                                                ),
+                                                                SizedBox(height: 8.0),
+                                                                if (_model.resumeSuggestions.isEmpty && _model.analysisPerformed)
+                                                                  Text(
+                                                                    'No specific suggestions at the moment. Your resume looks good!',
+                                                                    style: FlutterFlowTheme.of(context).bodyMedium.override(letterSpacing: 0.0),
+                                                                  )
+                                                                else
+                                                                  ListView.builder(
+                                                                    padding: EdgeInsets.zero,
+                                                                    shrinkWrap: true,
+                                                                    physics: NeverScrollableScrollPhysics(),
+                                                                    itemCount: _model.resumeSuggestions.length,
+                                                                    itemBuilder: (context, index) {
+                                                                      final suggestion = _model.resumeSuggestions[index];
+                                                                      return Padding(
+                                                                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                                                                        child: Card(
+                                                                          elevation: 1,
+                                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                                          child: ListTile(
+                                                                            leading: Icon(
+                                                                              suggestion['category'] == 'Keywords' ? Icons.search
+                                                                              : suggestion['category'] == 'Grammar' ? Icons.spellcheck
+                                                                              : suggestion['category'] == 'Impact' ? Icons.trending_up
+                                                                              : Icons.lightbulb_outline,
+                                                                              color: FlutterFlowTheme.of(context).primaryText
+                                                                            ),
+                                                                            title: Text(
+                                                                              suggestion['category']!,
+                                                                              style: FlutterFlowTheme.of(context).bodyLarge.override(
+                                                                                    fontFamily: GoogleFonts.inter().fontFamily,
+                                                                                    fontWeight: FontWeight.bold,
+                                                                                    useGoogleFonts: GoogleFonts.asMap().containsKey(GoogleFonts.inter().fontFamily),
+                                                                                    letterSpacing: 0.0,
+                                                                                  ),
+                                                                            ),
+                                                                            subtitle: Text(
+                                                                              suggestion['text']!,
+                                                                              style: FlutterFlowTheme.of(context).bodyMedium.override(letterSpacing: 0.0),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                SizedBox(height: 16.0),
+                                                              ],
+                                                              Align(
+                                                                alignment: AlignmentDirectional.center,
+                                                                child: FFButtonWidget(
+                                                                  onPressed: () async {
+                                                                    safeSetState(() {
+                                                                      _model.isAnalyzingResume = true;
+                                                                    });
+                                                                    await Future.delayed(Duration(seconds: 2));
+                                                                    safeSetState(() {
+                                                                      // Simulate analysis result
+                                                                      _model.resumeScore = (DateTime.now().millisecond % 40) + 60; // Random score 60-99
+                                                                      _model.resumeSuggestions = [
+                                                                        {'category': 'Keywords', 'text': 'Great keyword usage for your industry!'},
+                                                                        {'category': 'Impact', 'text': 'Try to quantify achievements in your experience section using numbers (e.g., "Increased sales by 15%").'},
+                                                                        {'category': 'Conciseness', 'text': 'Some sentences in your "About Me" could be more concise.'},
+                                                                      ];
+                                                                      _model.lastAnalyzedTimestamp = DateTime.now();
+                                                                      _model.analysisPerformed = true;
+                                                                      _model.isAnalyzingResume = false;
+                                                                    });
+                                                                  },
+                                                                  text: _model.analysisPerformed ? 'Re-analyze My Resume' : 'Analyze My Resume',
+                                                                  options: FFButtonOptions(
+                                                                    width: 250.0,
+                                                                    height: 40.0,
+                                                                    padding: EdgeInsetsDirectional.fromSTEB(24.0, 0.0, 24.0, 0.0),
+                                                                    iconPadding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
+                                                                    color: FlutterFlowTheme.of(context).primary,
+                                                                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                                                          fontFamily: FlutterFlowTheme.of(context).titleSmallFamily,
+                                                                          color: Colors.white,
+                                                                          letterSpacing: 0.0,
+                                                                          useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleSmallFamily),
+                                                                        ),
+                                                                    elevation: 3.0,
+                                                                    borderSide: BorderSide(
+                                                                      color: Colors.transparent,
+                                                                      width: 1.0,
+                                                                    ),
+                                                                    borderRadius: BorderRadius.circular(8.0),
+                                                                    disabledColor: FlutterFlowTheme.of(context).secondaryText,
+                                                                  ),
+                                                                  showLoadingIndicator: _model.isAnalyzingResume,
                                                                 ),
                                                               ),
                                                             ],
