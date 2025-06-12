@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>74680362523-sr0l78j9d9pshbp091222iv6a0kavhkp.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.74680362523-sr0l78j9d9pshbp091222iv6a0kavhkp</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>74680362523-f6bkr1fdij2aovmb5o2lnd916r0vp8t8.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCYrG1HKJ8-KrMCrdQPuG6lhOVlu7Abw6c</string>
+	<key>GCM_SENDER_ID</key>
+	<string>74680362523</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>worknet24.com</string>
+	<key>PROJECT_ID</key>
+	<string>opportune-6ef13</string>
+	<key>STORAGE_BUCKET</key>
+	<string>opportune-6ef13.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:74680362523:ios:07191ac57ecbd43e743abe</string>
+	<key>DATABASE_URL</key>
+	<string>https://opportune-6ef13-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
