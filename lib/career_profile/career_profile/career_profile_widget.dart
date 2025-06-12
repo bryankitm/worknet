@@ -16,6 +16,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'career_profile_model.dart';
 export 'career_profile_model.dart';
 
+// PDF Generation imports
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import 'dart:typed_data'; // For font loading, if needed later
+import 'package:flutter/services.dart' show rootBundle; // For font loading
+
 class CareerProfileWidget extends StatefulWidget {
   const CareerProfileWidget({super.key});
 
@@ -30,6 +37,139 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
   late CareerProfileModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+
+  Future<void> _generateAndSavePdf({
+    required UsersRecord usersRecord,
+    required CareerProfileRecord careerProfileRecord,
+  }) async {
+    safeSetState(() => _model.isGeneratingPdf = true);
+
+    // final usersRecord = currentUserDocument!; // Now passed as parameter
+    // final careerProfileRecord = _model.snapshotData!; // Now passed as parameter
+
+    final pdf = pw.Document();
+
+    // Example: Load a font (optional, standard fonts work too)
+    // final fontData = await rootBundle.load("assets/fonts/OpenSans-Regular.ttf");
+    // final ttf = pw.Font.ttf(fontData);
+    // final boldFontData = await rootBundle.load("assets/fonts/OpenSans-Bold.ttf");
+    // final boldTtf = pw.Font.ttf(boldFontData);
+
+    // Using standard fonts to avoid asset issues for now
+    final pw.ThemeData theme = pw.ThemeData.withFont(
+      base: pw.Font.helvetica(),
+      bold: pw.Font.helveticaBold(),
+      italic: pw.Font.helveticaOblique(),
+      boldItalic: pw.Font.helveticaBoldOblique(),
+    );
+
+    pdf.addPage(
+      pw.MultiPage(
+        theme: theme,
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          List<pw.Widget> content = [];
+
+          // --- Header ---
+          if (usersRecord.photoUrl.isNotEmpty) {
+            // Skipping image loading for now to avoid http dependency and complexity
+            // final netImage = await networkImage(usersRecord.photoUrl);
+            // content.add(pw.Header(level: 0, child: pw.Row(
+            //   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     pw.Text('${usersRecord.displayName}', style: pw.TextStyle(font: boldTtf, fontSize: 24)),
+            //     pw.Container(
+            //       height: 50,
+            //       width: 50,
+            //       child: pw.Image(netImage), // Placeholder for actual image
+            //     )
+            //   ]
+            // )));
+            content.add(pw.Header(level: 0, text: usersRecord.displayName));
+          } else {
+            content.add(pw.Header(level: 0, text: usersRecord.displayName));
+          }
+          content.add(pw.Text('Email: ${usersRecord.email}'));
+          content.add(pw.Text('Phone: ${usersRecord.phoneNumber}'));
+          if (usersRecord.location.isNotEmpty) {
+            content.add(pw.Text('Location: ${usersRecord.location}'));
+          }
+          content.add(pw.Divider());
+          content.add(pw.SizedBox(height: 10));
+
+          // --- About Me ---
+          if (careerProfileRecord.aboutMe.isNotEmpty) {
+            content.add(pw.Header(level: 1, text: 'About Me'));
+            content.add(pw.Paragraph(text: functions.htmlToString(careerProfileRecord.aboutMe)));
+            content.add(pw.SizedBox(height: 10));
+          }
+
+          // --- Work Experience ---
+          if (careerProfileRecord.workExperience.isNotEmpty) {
+            content.add(pw.Header(level: 1, text: 'Work Experience'));
+            for (var exp in careerProfileRecord.workExperience) {
+              content.add(pw.Text(exp.jobTitle, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+              content.add(pw.Text('${exp.employerName} | ${exp.startDate?.year}-${exp.endDate?.year ?? 'Present'}'));
+              content.add(pw.Text('Location: ${exp.location}'));
+              content.add(pw.Paragraph(text: functions.htmlToString(exp.description)));
+              content.add(pw.SizedBox(height: 5));
+            }
+            content.add(pw.SizedBox(height: 10));
+          }
+
+          // --- Education ---
+          if (careerProfileRecord.education.isNotEmpty) {
+            content.add(pw.Header(level: 1, text: 'Education'));
+            for (var edu in careerProfileRecord.education) {
+              content.add(pw.Text(edu.qualificationName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)));
+              content.add(pw.Text('${edu.institutionName} | ${edu.startDate?.year}-${edu.endDate?.year}'));
+              content.add(pw.Paragraph(text: functions.htmlToString(edu.description)));
+              content.add(pw.SizedBox(height: 5));
+            }
+            content.add(pw.SizedBox(height: 10));
+          }
+
+          // --- Skills ---
+           if (careerProfileRecord.jobSkills.isNotEmpty) {
+            content.add(pw.Header(level: 1, text: 'Skills'));
+            content.add(pw.Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: careerProfileRecord.jobSkills.map((skill) => pw.Container(
+                padding: pw.EdgeInsets.all(5),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey),
+                  borderRadius: pw.BorderRadius.circular(5),
+                ),
+                child: pw.Text(skill)
+              )).toList(),
+            ));
+            content.add(pw.SizedBox(height: 10));
+          }
+
+          // Add other sections similarly: Projects, Associations, Certificates, Languages
+          // For brevity, these are omitted in this first pass but would follow the same pattern.
+
+          return content;
+        },
+      ),
+    );
+
+    try {
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile downloaded successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error downloading profile: $e')),
+      );
+    } finally {
+      safeSetState(() => _model.isGeneratingPdf = false);
+    }
+  }
 
   @override
   void initState() {
@@ -306,7 +446,8 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
                                                     ),
                                               ),
                                               Text(
-                                                'Location: Kampala',
+                                                'Location: ${valueOrDefault<String>(currentUserDocument?.employmentAvailability.location, 'Not Set')}',
+                                                'Location: ${valueOrDefault<String>(currentUserDocument?.employmentAvailability.location, 'Not Set')}',
                                                 style: FlutterFlowTheme.of(
                                                         context)
                                                     .bodyMedium
@@ -511,13 +652,31 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
                                                               .fontStyle,
                                                     ),
                                               ),
-                                              Text(
-                                                'Location: Kampala',
-                                                style: FlutterFlowTheme.of(
-                                                        context)
-                                                    .bodyMedium
-                                                    .override(
-                                                      font: GoogleFonts.inter(
+                                              ),
+                                              AuthUserStreamWidget(
+                                                builder: (context) => Text(
+                                                  'Location: ${valueOrDefault<String>(currentUserDocument?.employmentAvailability.location, 'Not Set')}',
+                                                  style: FlutterFlowTheme.of(
+                                                          context)
+                                                      .bodyMedium
+                                                      .override(
+                                                        font: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontWeight,
+                                                          fontStyle:
+                                                              FlutterFlowTheme.of(
+                                                                      context)
+                                                                  .bodyMedium
+                                                                  .fontStyle,
+                                                        ),
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .primaryText,
+                                                        letterSpacing: 0.0,
                                                         fontWeight:
                                                             FlutterFlowTheme.of(
                                                                     context)
@@ -529,22 +688,7 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
                                                                 .bodyMedium
                                                                 .fontStyle,
                                                       ),
-                                                      color:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .primaryText,
-                                                      letterSpacing: 0.0,
-                                                      fontWeight:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontWeight,
-                                                      fontStyle:
-                                                          FlutterFlowTheme.of(
-                                                                  context)
-                                                              .bodyMedium
-                                                              .fontStyle,
-                                                    ),
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -3499,30 +3643,31 @@ class _CareerProfileWidgetState extends State<CareerProfileWidget> {
                                                                     AlignmentDirectional(
                                                                         1.0,
                                                                         0.0),
-                                                                child: Text(
-                                                                  'DOWNLOAD',
-                                                                  style: FlutterFlowTheme.of(
-                                                                          context)
-                                                                      .titleMedium
-                                                                      .override(
-                                                                        font: GoogleFonts
-                                                                            .interTight(
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                          fontStyle: FlutterFlowTheme.of(context)
-                                                                              .titleMedium
-                                                                              .fontStyle,
+                                                                child: FFButtonWidget(
+                                                                  onPressed: _model.isGeneratingPdf ? null : () async => await _generateAndSavePdf(usersRecord: currentUserDocument!, careerProfileRecord: careerProfileCareerProfileRecord),
+                                                                  onPressed: _model.isGeneratingPdf ? null : () async => await _generateAndSavePdf(usersRecord: currentUserDocument!, careerProfileRecord: careerProfileCareerProfileRecord),
+                                                                  text: 'DOWNLOAD PROFILE',
+                                                                  icon: _model.isGeneratingPdf ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))) : Icon(Icons.download_rounded, size: 15),
+                                                                  options: FFButtonOptions(
+                                                                    height: 40.0,
+                                                                    padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
+                                                                    iconPadding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
+                                                                    color: FlutterFlowTheme.of(context).primary,
+                                                                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                                                          fontFamily: FlutterFlowTheme.of(context).titleSmallFamily,
+                                                                          color: Colors.white,
+                                                                          letterSpacing: 0.0,
+                                                                          useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleSmallFamily),
                                                                         ),
-                                                                        color: FlutterFlowTheme.of(context)
-                                                                            .customColor2,
-                                                                        letterSpacing:
-                                                                            0.0,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
-                                                                        fontStyle: FlutterFlowTheme.of(context)
-                                                                            .titleMedium
-                                                                            .fontStyle,
-                                                                      ),
+                                                                    elevation: 2.0,
+                                                                    borderSide: BorderSide(
+                                                                      color: Colors.transparent,
+                                                                      width: 1.0,
+                                                                    ),
+                                                                    borderRadius: BorderRadius.circular(8.0),
+                                                                    disabledColor: FlutterFlowTheme.of(context).secondaryText,
+                                                                  ),
+                                                                  showLoadingIndicator: _model.isGeneratingPdf,
                                                                 ),
                                                               ),
                                                             ],

@@ -663,8 +663,14 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                         ),
                                                       FFButtonWidget(
                                                         onPressed: () async {
-                                                          await actions
-                                                              .copyJobs();
+                                                          context.pushNamed(
+                                                            JobListingWidget.routeName,
+                                                            queryParameters: {
+                                                              'keywords': _model.textController1.text,
+                                                              'experience': _model.dropDownValue1?.toString(),
+                                                              'location': _model.textController2.text,
+                                                            }.withoutNulls,
+                                                          );
                                                         },
                                                         text: 'Search',
                                                         options:
@@ -1205,8 +1211,15 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                   ),
                                                 ),
                                                 FFButtonWidget(
-                                                  onPressed: () {
-                                                    print('Button pressed ...');
+                                                  onPressed: () async {
+                                                    context.pushNamed(
+                                                      JobListingWidget.routeName,
+                                                      queryParameters: {
+                                                        'keywords': _model.textController3.text,
+                                                        'experience': _model.dropDownValue2?.toString(),
+                                                        'location': _model.textController4.text,
+                                                      }.withoutNulls,
+                                                    );
                                                   },
                                                   text: 'Search',
                                                   options: FFButtonOptions(
@@ -1554,9 +1567,16 @@ class _HomeWidgetState extends State<HomeWidget> {
 
                                                                     return FFButtonWidget(
                                                                       onPressed:
-                                                                          () {
-                                                                        print(
-                                                                            'Button pressed ...');
+                                                                          () async {
+                                                                        context.pushNamed(
+                                                                          JobListingWidget.routeName,
+                                                                          queryParameters: {
+                                                                            'categoryRef': serializeParam(
+                                                                              carouselJobCategoriesRecord.reference,
+                                                                              ParamType.DocumentReference,
+                                                                            ),
+                                                                          }.withoutNulls,
+                                                                        );
                                                                       },
                                                                       text:
                                                                           '${buttonCount.toString()} Jobs',
@@ -1792,10 +1812,26 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                                       0.0,
                                                                       10.0,
                                                                       0.0),
-                                                          child: Container(
-                                                            width: 100.0,
-                                                            height: 100.0,
-                                                            decoration:
+                                                          child: InkWell(
+                                                            splashColor: Colors.transparent,
+                                                            focusColor: Colors.transparent,
+                                                            hoverColor: Colors.transparent,
+                                                            highlightColor: Colors.transparent,
+                                                            onTap: () async {
+                                                              context.pushNamed(
+                                                                JobListingWidget.routeName,
+                                                                queryParameters: {
+                                                                  'categoryRef': serializeParam(
+                                                                    rowJobCategoriesRecord.reference,
+                                                                    ParamType.DocumentReference,
+                                                                  ),
+                                                                }.withoutNulls,
+                                                              );
+                                                            },
+                                                            child: Container(
+                                                              width: 100.0,
+                                                              height: 100.0,
+                                                              decoration:
                                                                 BoxDecoration(
                                                               color: FlutterFlowTheme
                                                                       .of(context)
@@ -1996,8 +2032,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         FFButtonWidget(
-                                          onPressed: () {
-                                            print('Button pressed ...');
+                                          onPressed: () async {
+                                            context.pushNamed(
+                                                JobListingWidget.routeName);
                                           },
                                           text: 'All Categories',
                                           options: FFButtonOptions(

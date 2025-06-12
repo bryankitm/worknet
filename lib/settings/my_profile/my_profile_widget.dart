@@ -64,6 +64,13 @@ class _MyProfileWidgetState extends State<MyProfileWidget> {
         TextEditingController(text: currentUserEmail);
     _model.emailAddressFocusNode ??= FocusNode();
 
+    // Initialize CV fields from Firestore
+    _model.uploadedCVUrl = valueOrDefault(currentUserDocument?.cvUrl, '');
+    _model.uploadedCVName = (_model.uploadedCVUrl.isNotEmpty && currentUserDocument?.cvFilename != null && currentUserDocument!.cvFilename.isNotEmpty)
+        ? currentUserDocument!.cvFilename
+        : (_model.uploadedCVUrl.isNotEmpty ? 'Uploaded CV' : '');
+
+
     _model.textController7 ??= TextEditingController(
         text: valueOrDefault(currentUserDocument?.facebook, ''));
     _model.textFieldFocusNode1 ??= FocusNode();
@@ -351,6 +358,7 @@ class _MyProfileWidgetState extends State<MyProfileWidget> {
                                                               maxHeight:
                                                                   1080.00,
                                                               allowPhoto: true,
+                                                              allowedExtensions: ['jpg', 'png', 'jpeg'], // Added extension limiting
                                                             );
                                                             if (selectedMedia !=
                                                                     null &&
@@ -613,6 +621,138 @@ class _MyProfileWidgetState extends State<MyProfileWidget> {
                                     ),
                                   ),
                                 ),
+                                // CV Upload Section
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 10.0, 0.0, 10.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 5.0),
+                                        child: Text(
+                                          'Your CV (PDF)',
+                                          style: FlutterFlowTheme.of(context).titleMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).titleMediumFamily,
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleMediumFamily),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: FlutterFlowTheme.of(context).secondaryBackground,
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          border: Border.all(
+                                            color: FlutterFlowTheme.of(context).alternate,
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(12.0),
+                                          child: Column(
+                                            children: [
+                                              if (_model.uploadedCVUrl.isEmpty && !_model.isUploadingCV)
+                                                FFButtonWidget(
+                                                  onPressed: () async {
+                                                    final selectedMedia = await selectMediaWithSourceBottomSheet(
+                                                      context: context,
+                                                      allowPhoto: false,
+                                                      allowedExtensions: ['pdf'],
+                                                      mediaSource: MediaSource.files,
+                                                    );
+                                                    if (selectedMedia != null &&
+                                                        selectedMedia.every((m) => validateFileFormat(m.storagePath, context, fileType: 'pdf'))) {
+                                                      safeSetState(() => _model.isUploadingCV = true);
+                                                      var selectedUploadedFile = FFUploadedFile(
+                                                        name: selectedMedia.first.storagePath.split('/').last,
+                                                        bytes: selectedMedia.first.bytes,
+                                                      );
+                                                      String? downloadUrl;
+                                                      try {
+                                                        showUploadMessage(context, 'Uploading CV...', showLoading: true);
+                                                        downloadUrl = await uploadData(selectedMedia.first.storagePath, selectedMedia.first.bytes);
+                                                      } finally {
+                                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                                        _model.isUploadingCV = false;
+                                                      }
+
+                                                      if (downloadUrl != null) {
+                                                        safeSetState(() {
+                                                          _model.uploadedCVFile = selectedUploadedFile;
+                                                          _model.uploadedCVUrl = downloadUrl!;
+                                                          _model.uploadedCVName = selectedUploadedFile.name ?? 'Uploaded CV.pdf';
+                                                        });
+                                                        showUploadMessage(context, 'CV Uploaded Successfully!');
+                                                      } else {
+                                                        showUploadMessage(context, 'Failed to upload CV.');
+                                                        return;
+                                                      }
+                                                    }
+                                                  },
+                                                  text: 'Upload CV (PDF)',
+                                                  icon: Icon(Icons.upload_file),
+                                                  options: FFButtonOptions(
+                                                    width: double.infinity,
+                                                    height: 40.0,
+                                                    color: FlutterFlowTheme.of(context).primary,
+                                                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                                          fontFamily: FlutterFlowTheme.of(context).titleSmallFamily,
+                                                          color: Colors.white,
+                                                          letterSpacing: 0.0,
+                                                          useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleSmallFamily),
+                                                        ),
+                                                    elevation: 2.0,
+                                                    borderSide: BorderSide(
+                                                      color: Colors.transparent,
+                                                      width: 1.0,
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(8.0),
+                                                  ),
+                                                ),
+                                              if (_model.isUploadingCV)
+                                                CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(FlutterFlowTheme.of(context).primary),
+                                                ),
+                                              if (_model.uploadedCVUrl.isNotEmpty && !_model.isUploadingCV)
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Icon(Icons.picture_as_pdf, color: FlutterFlowTheme.of(context).primary),
+                                                    SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        _model.uploadedCVName,
+                                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                              fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                                              letterSpacing: 0.0,
+                                                              useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                                            ),
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      icon: Icon(Icons.delete_outline, color: FlutterFlowTheme.of(context).error, size: 24.0),
+                                                      onPressed: () async {
+                                                        safeSetState(() {
+                                                          _model.uploadedCVUrl = '';
+                                                          _model.uploadedCVName = '';
+                                                          _model.uploadedCVFile = FFUploadedFile(bytes: Uint8List.fromList([]));
+                                                        });
+                                                        // This only clears the selection. Actual deletion from storage will be handled by save logic.
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // End CV Upload Section
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       15.0, 0.0, 15.0, 0.0),
@@ -3185,8 +3325,10 @@ class _MyProfileWidgetState extends State<MyProfileWidget> {
                                                   jobTitle: _model
                                                       .jobTitleTextController
                                                       .text,
-                                                  photoUrl: _model
-                                                      .uploadedFileUrl_uploadDataV2,
+                                                  photoUrl: _model.uploadedFileUrl_uploadDataV2.isNotEmpty ? _model.uploadedFileUrl_uploadDataV2 : currentUserPhoto,
+                                                  location: _model.placePickerValue.address.isNotEmpty ? _model.placePickerValue.address : currentUserDocument?.location,
+                                                  cvUrl: _model.uploadedCVUrl,
+                                                  cvFilename: _model.uploadedCVName,
                                                 ));
                                                 await showDialog(
                                                   context: context,

@@ -46,6 +46,9 @@ class CareerProfileModel extends FlutterFlowModel<CareerProfileWidget> {
   // Model for SideBar component.
   late SideBarModel sideBarModel;
 
+  // State field(s) for PDF generation
+  bool isGeneratingPdf = false;
+
   @override
   void initState(BuildContext context) {
     headerMainModel = createModel(context, () => HeaderMainModel());

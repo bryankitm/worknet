@@ -16,6 +16,13 @@ class MyProfileModel extends FlutterFlowModel<MyProfileWidget> {
       FFUploadedFile(bytes: Uint8List.fromList([]));
   String uploadedFileUrl_uploadDataV2 = '';
 
+  // CV Upload State Variables
+  bool isUploadingCV = false;
+  FFUploadedFile uploadedCVFile =
+      FFUploadedFile(bytes: Uint8List.fromList([]));
+  String uploadedCVUrl = '';
+  String uploadedCVName = '';
+
   // State field(s) for YourName widget.
   FocusNode? yourNameFocusNode;
   TextEditingController? yourNameTextController;

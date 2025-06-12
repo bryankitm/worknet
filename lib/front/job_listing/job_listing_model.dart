@@ -34,6 +34,21 @@ class JobListingModel extends FlutterFlowModel<JobListingWidget> {
   // Model for SideBarFront component.
   late SideBarFrontModel sideBarFrontModel;
 
+  // Added for initial query parameters
+  String? initialKeywords;
+  String? initialExperience;
+  String? initialLocation;
+  DocumentReference? initialCategoryRefDoc;
+  String? initialCategoryRefString; // To store the string from params
+
+  // To store the actual category DocumentReference for filtering
+  DocumentReference? currentCategoryRef;
+
+  // Added for sorting
+  String? currentSortField;
+  bool isSortDescending = true; // Default to true for 'posted_at'
+
+
   @override
   void initState(BuildContext context) {
     headerMainModel = createModel(context, () => HeaderMainModel());
