@@ -1,7 +1,9 @@
 import '/auth/base_auth_user_provider.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
+import '/user/notifications/user_notifications_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'side_bar_front_model.dart';
@@ -32,7 +34,8 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => SideBarFrontModel());
-
+    // Initialize the model's stream here if it's not auto-initialized
+    // _model.initState(context); // Already called by createModel
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
@@ -97,6 +100,166 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                 thickness: 0.5,
                 color: FlutterFlowTheme.of(context).alternate,
               ),
+              if (loggedIn) // Only show Notifications if logged in
+                StreamBuilder<int>(
+                  stream: _model.unreadNotificationsCountStream,
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    final bool hasUnread = unreadCount > 0;
+                    return InkWell(
+                      splashColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () async {
+                        context.pushNamed(
+                          UserNotificationsWidget.routeName,
+                          extra: <String, dynamic>{
+                            kTransitionInfoKey: TransitionInfo(
+                              hasTransition: true,
+                              transitionType: PageTransitionType.fade,
+                              duration: Duration(milliseconds: 0),
+                            ),
+                          },
+                        );
+                      },
+                      child: Container(
+                        height: 40.0,
+                        decoration: BoxDecoration(
+                          color: FlutterFlowTheme.of(context).secondaryBackground,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8.0),
+                            bottomRight: Radius.circular(0.0),
+                            topLeft: Radius.circular(8.0),
+                            topRight: Radius.circular(0.0),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Icon(
+                                hasUnread ? Icons.notifications_active : Icons.notifications_none,
+                                color: widget.page == UserNotificationsWidget.routeName
+                                    ? FlutterFlowTheme.of(context).primary
+                                    : FlutterFlowTheme.of(context).primaryText,
+                                size: 20.0,
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                'Notifications',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                      color: widget.page == UserNotificationsWidget.routeName
+                                          ? FlutterFlowTheme.of(context).primary
+                                          : FlutterFlowTheme.of(context).primaryText,
+                                      fontSize: 14.0,
+                                      letterSpacing: 0.0,
+                                      fontWeight: FontWeight.normal,
+                                      useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                    ),
+                              ),
+                              if (hasUnread)
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 0.0, 0.0),
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.0),
+                                    decoration: BoxDecoration(
+                                      color: FlutterFlowTheme.of(context).error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      unreadCount.toString(),
+                                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                                        fontFamily: FlutterFlowTheme.of(context).bodySmallFamily,
+                                        color: FlutterFlowTheme.of(context).onError,
+                                        fontSize: 10.0,
+                                        letterSpacing: 0.0,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodySmallFamily),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              if (loggedIn)
+                Divider(
+                  thickness: 0.5,
+                  color: FlutterFlowTheme.of(context).alternate,
+                ),
+              // My Interviews Link for SideBarFrontWidget
+              if (loggedIn && (valueOrDefault(currentUserDocument?.role, '') == 'User'))
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () async {
+                        context.pushNamed(UserInterviewScheduleWidget.routeName);
+                      },
+                      child: Container(
+                        height: 40.0,
+                        decoration: BoxDecoration(
+                          color: widget.page == UserInterviewScheduleWidget.routeName
+                              ? FlutterFlowTheme.of(context).primaryBackground // Or a subtle highlight
+                              : FlutterFlowTheme.of(context).secondaryBackground,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8.0),
+                            bottomRight: Radius.circular(0.0),
+                            topLeft: Radius.circular(8.0),
+                            topRight: Radius.circular(0.0),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                               Icon(
+                                Icons.event_available_outlined, // Or Icons.calendar_today_outlined
+                                color: widget.page == UserInterviewScheduleWidget.routeName
+                                    ? FlutterFlowTheme.of(context).primary
+                                    : FlutterFlowTheme.of(context).primaryText,
+                                size: 20.0,
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                'My Interviews',
+                                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                      fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                      color: widget.page == UserInterviewScheduleWidget.routeName
+                                          ? FlutterFlowTheme.of(context).primary
+                                          : FlutterFlowTheme.of(context).primaryText,
+                                      fontSize: 14.0,
+                                      letterSpacing: 0.0,
+                                      fontWeight: FontWeight.normal,
+                                      useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Divider(
+                      thickness: 0.5,
+                      color: FlutterFlowTheme.of(context).alternate,
+                    ),
+                  ],
+                ),
+              // End My Interviews Link for SideBarFrontWidget
               InkWell(
                 splashColor: Colors.transparent,
                 focusColor: Colors.transparent,
@@ -199,21 +362,14 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                           style: FlutterFlowTheme.of(context)
                               .bodyMedium
                               .override(
-                                font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.normal,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .fontStyle,
-                                ),
+                                fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
                                 color: widget.page == 'jobListing'
                                     ? FlutterFlowTheme.of(context).primary
                                     : FlutterFlowTheme.of(context).primaryText,
                                 fontSize: 14.0,
                                 letterSpacing: 0.0,
                                 fontWeight: FontWeight.normal,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                               ),
                         ),
                       ],
@@ -275,9 +431,7 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                                 fontSize: 14.0,
                                 letterSpacing: 0.0,
                                 fontWeight: FontWeight.normal,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                               ),
                         ),
                       ],
@@ -339,9 +493,7 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                                 fontSize: 14.0,
                                 letterSpacing: 0.0,
                                 fontWeight: FontWeight.normal,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                               ),
                         ),
                       ],
@@ -403,9 +555,7 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                                 fontSize: 14.0,
                                 letterSpacing: 0.0,
                                 fontWeight: FontWeight.normal,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                               ),
                         ),
                       ],
@@ -467,9 +617,7 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                                 fontSize: 14.0,
                                 letterSpacing: 0.0,
                                 fontWeight: FontWeight.normal,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                               ),
                         ),
                       ],
@@ -599,9 +747,7 @@ class _SideBarFrontWidgetState extends State<SideBarFrontWidget> {
                                   fontSize: 16.0,
                                   letterSpacing: 0.0,
                                   fontWeight: FontWeight.w600,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .fontStyle,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                                 ),
                           ),
                         ],

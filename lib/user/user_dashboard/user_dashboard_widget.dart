@@ -32,7 +32,49 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
     super.initState();
     _model = createModel(context, () => UserDashboardModel());
 
+    _fetchRecommendedJobs(); // Call method to load recommendations
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+  }
+
+  Future<void> _fetchRecommendedJobs() async {
+    if (!mounted) return;
+    safeSetState(() {
+      _model.isLoadingRecommendations = true;
+    });
+
+    // TODO: Implement API call to fetch actual recommendations
+    await Future.delayed(Duration(milliseconds: 1500)); // Simulate API call
+
+    if (!mounted) return;
+    safeSetState(() {
+      _model.recommendedJobs = [
+        {
+          'job_id': 'rec_job_1',
+          'job_title': 'Senior Flutter Developer',
+          'company_name': 'Innovate Solutions Ltd.',
+          'location': 'Remote (Kampala Focus)',
+          'job_summary': 'Exciting opportunity for an experienced Flutter dev to lead cutting-edge mobile projects.',
+          'company_logo': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxfHxjb21wYW55JTIwbG9nb3xlbnwwfHx8fDE3MTk0MzYxNzR8MA&ixlib=rb-4.0.3&q=80&w=400',
+        },
+        {
+          'job_id': 'rec_job_2',
+          'job_title': 'UI/UX Designer (Mobile Apps)',
+          'company_name': 'Creative Minds Inc.',
+          'location': 'Kampala, Uganda',
+          'job_summary': 'Join our team to design beautiful and intuitive mobile experiences for diverse clients.',
+          'company_logo': 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwyfHxjb21wYW55JTIwbG9nb3xlbnwwfHx8fDE3MTk0MzYxNzR8MA&ixlib=rb-4.0.3&q=80&w=400',
+        },
+        {
+          'job_id': 'rec_job_3',
+          'job_title': 'Backend Go Developer',
+          'company_name': 'Tech Systems Uganda',
+          'location': 'Nairobi, Kenya (Remote Option)',
+          'job_summary': 'Build scalable backend systems using Go for our growing platform.',
+          'company_logo': 'https://images.unsplash.com/photo-1549924231-f129b911e4ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwzfHxjb21wYW55JTIwbG9nb3xlbnwwfHx8fDE3MTk0MzYxNzR8MA&ixlib=rb-4.0.3&q=80&w=400',
+        }
+      ];
+      _model.isLoadingRecommendations = false;
+    });
   }
 
   @override
@@ -40,6 +82,160 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+  @override
+  // Helper method to build the Recommended Jobs Section
+  Widget _buildRecommendedJobsSection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recommended Jobs for You',
+                style: FlutterFlowTheme.of(context)
+                    .titleLarge
+                    .override(
+                      fontFamily: FlutterFlowTheme.of(context).titleLargeFamily,
+                      letterSpacing: 0.0,
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleLargeFamily),
+                    ),
+              ),
+              IconButton(
+                icon: Icon(Icons.refresh_rounded),
+                onPressed: _fetchRecommendedJobs,
+                tooltip: 'Refresh Recommendations',
+              ),
+            ],
+          ),
+          SizedBox(height: 8.0),
+          if (_model.isLoadingRecommendations)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_model.recommendedJobs.isEmpty)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  'No job recommendations for you at the moment. Keep your profile updated!',
+                  textAlign: TextAlign.center,
+                  style: FlutterFlowTheme.of(context).bodyMedium.override(letterSpacing: 0.0),
+                ),
+              ),
+            )
+          else
+            ListView.builder(
+              padding: EdgeInsets.zero,
+              primary: false,
+              shrinkWrap: true,
+              scrollDirection: Axis.vertical,
+              itemCount: _model.recommendedJobs.length,
+              itemBuilder: (context, index) {
+                final job = _model.recommendedJobs[index];
+                return Card(
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  color: FlutterFlowTheme.of(context).secondaryBackground,
+                  elevation: 2.0,
+                  margin: EdgeInsets.symmetric(vertical: 4.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: InkWell(
+                    splashColor: Colors.transparent,
+                    focusColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () async {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Navigate to job ID: ${job['job_id']} (Placeholder)'),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6.0),
+                            child: Image.network(
+                              valueOrDefault<String>(
+                                job['company_logo'],
+                                'https://via.placeholder.com/80',
+                              ),
+                              width: 60.0,
+                              height: 60.0,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          SizedBox(width: 12.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  job['job_title'] ?? 'N/A',
+                                  style: FlutterFlowTheme.of(context).titleMedium.override(
+                                        fontFamily: FlutterFlowTheme.of(context).titleMediumFamily,
+                                        letterSpacing: 0.0,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).titleMediumFamily),
+                                      ),
+                                ),
+                                SizedBox(height: 4.0),
+                                Text(
+                                  job['company_name'] ?? 'N/A',
+                                  style: FlutterFlowTheme.of(context).bodySmall.override(
+                                        fontFamily: FlutterFlowTheme.of(context).bodySmallFamily,
+                                        color: FlutterFlowTheme.of(context).secondaryText,
+                                        letterSpacing: 0.0,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodySmallFamily),
+                                      ),
+                                ),
+                                SizedBox(height: 2.0),
+                                Text(
+                                  job['location'] ?? 'N/A',
+                                  style: FlutterFlowTheme.of(context).bodySmall.override(
+                                        fontFamily: FlutterFlowTheme.of(context).bodySmallFamily,
+                                        color: FlutterFlowTheme.of(context).secondaryText,
+                                        letterSpacing: 0.0,
+                                        useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodySmallFamily),
+                                      ),
+                                ),
+                                if (job['job_summary'] != null && job['job_summary']!.isNotEmpty) ...[
+                                  SizedBox(height: 6.0),
+                                  Text(
+                                    job['job_summary']!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                          fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                          letterSpacing: 0.0,
+                                          useGoogleFonts: GoogleFonts.asMap().containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
+                                        ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -221,7 +417,9 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
                                                                   20.0,
                                                                   0.0,
                                                                   0.0),
-                                                      child: Row(
+                                                      child: Column( // Added Column for Recommended Jobs + Original Row
+                                                        children: [
+                                                          Row(
                                                         mainAxisSize:
                                                             MainAxisSize.max,
                                                         mainAxisAlignment:
@@ -488,6 +686,15 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
                                                         ].divide(SizedBox(
                                                             width: 5.0)),
                                                       ),
+                                                    ),
+                                                          _buildRecommendedJobsSection(context), // Inserted here for mobile
+                                                          Row(
+                                                          _buildRecommendedJobsSection(context), // Inserted here for mobile
+                                                          Row(
+                                                          _buildRecommendedJobsSection(context), // Inserted here for mobile
+                                                          Row(
+                                                        ],
+                                                      )
                                                     ),
                                                     Padding(
                                                       padding:
@@ -2729,7 +2936,10 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
                                                                   20.0,
                                                                   0.0,
                                                                   0.0),
-                                                      child: Row(
+                                                      child: Column( // Added Column for Recommended Jobs + Original Row
+                                                        children: [
+                                                          _buildRecommendedJobsSection(context), // Inserted here for desktop
+                                                          Row(
                                                         mainAxisSize:
                                                             MainAxisSize.max,
                                                         mainAxisAlignment:
@@ -3087,6 +3297,13 @@ class _UserDashboardWidgetState extends State<UserDashboardWidget> {
                                                           ),
                                                         ],
                                                       ),
+                                                    ),
+                                                          _buildRecommendedJobsSection(context), // Inserted here for desktop
+                                                          Row(
+                                                          _buildRecommendedJobsSection(context), // Inserted here for desktop
+                                                          Row(
+                                                        ],
+                                                      )
                                                     ),
                                                     Padding(
                                                       padding:

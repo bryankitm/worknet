@@ -15,6 +15,10 @@ class UserDashboardModel extends FlutterFlowModel<UserDashboardWidget> {
   // Model for SideBar component.
   late SideBarModel sideBarModel2;
 
+  // Fields for Job Recommendations
+  List<Map<String, dynamic>> recommendedJobs = [];
+  bool isLoadingRecommendations = false;
+
   @override
   void initState(BuildContext context) {
     sideBarModel1 = createModel(context, () => SideBarModel());

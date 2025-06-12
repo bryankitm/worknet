@@ -654,6 +654,23 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: JobseseWidget.routeName,
           path: JobseseWidget.routePath,
           builder: (context, params) => JobseseWidget(),
+        ),
+        FFRoute(
+          name: UserInterviewScheduleWidget.routeName,
+          path: UserInterviewScheduleWidget.routePath,
+          requireAuth: true,
+          builder: (context, params) => UserInterviewScheduleWidget(),
+        ),
+        FFRoute(
+          name: ChatThreadWidget.routeName,
+          path: ChatThreadWidget.routePath, // Should be '/chatThread/:chatId'
+          requireAuth: true,
+          builder: (context, params) => ChatThreadWidget(
+            chatId: params.getParam('chatId', ParamType.String)!, // Path param
+            otherUserName: params.getParam('otherUserName', ParamType.String)!, // Query/Extra
+            otherUserAvatarUrl: params.getParam('otherUserAvatarUrl', ParamType.String), // Query/Extra
+            otherUserId: params.getParam('otherUserId', ParamType.String)!, // Query/Extra
+          ),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

@@ -1,4 +1,5 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/comps/notification_bell_icon/notification_bell_icon_widget.dart'; // Added import
 import '/comps/side_nav/side_nav_widget.dart';
 import '/comps/side_nav_mobile/side_nav_mobile_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -400,6 +401,20 @@ class _HeaderMainWidgetState extends State<HeaderMainWidget> {
                                       width: 1.0,
                                     ),
                                     borderRadius: BorderRadius.circular(28.0),
+                                  ),
+                                ),
+                              // Adding NotificationBellIconWidget here for logged-in users
+                              if (loggedIn)
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0), // Adjust padding as needed
+                                  child: wrapWithModel(
+                                    model: _model.notificationBellIconModel ??=
+                                        createModel(context, () => NotificationBellIconModel()),
+                                    updateCallback: () => safeSetState(() {}),
+                                    child: NotificationBellIconWidget(
+                                      iconColor: FlutterFlowTheme.of(context).primaryText,
+                                      iconSize: 28.0, // Slightly larger for header
+                                    ),
                                   ),
                                 ),
                               FFButtonWidget(

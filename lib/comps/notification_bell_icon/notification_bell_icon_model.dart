@@ -2,14 +2,13 @@ import '/auth/firebase_auth/auth_util.dart';
 import '/backend/backend.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'dart:async';
-import 'side_bar_front_widget.dart' show SideBarFrontWidget;
+import 'notification_bell_icon_widget.dart' show NotificationBellIconWidget;
 import 'package:flutter/material.dart';
 
-class SideBarFrontModel extends FlutterFlowModel<SideBarFrontWidget> {
-  /// Stream that emits the count of unread notifications.
+class NotificationBellIconModel extends FlutterFlowModel<NotificationBellIconWidget> {
   late Stream<int> unreadNotificationsCountStream;
-  StreamSubscription? _countStreamSubscription; // To manage the underlying list stream
-  StreamController<int>? _controller; // Controller for the count stream
+  StreamSubscription? _countStreamSubscription;
+  StreamController<int>? _controller;
 
   @override
   void initState(BuildContext context) {
@@ -18,7 +17,7 @@ class SideBarFrontModel extends FlutterFlowModel<SideBarFrontWidget> {
           .where('user_id', isEqualTo: currentUserReference)
           .where('is_read', isEqualTo: false);
 
-      _controller = StreamController<int>(); // Initialize the controller
+      _controller = StreamController<int>();
 
       _countStreamSubscription = query.snapshots().listen((snapshot) {
         _controller?.add(snapshot.length);
@@ -26,7 +25,6 @@ class SideBarFrontModel extends FlutterFlowModel<SideBarFrontWidget> {
 
       unreadNotificationsCountStream = _controller!.stream;
     } else {
-      // If user is not logged in, stream emits 0 and closes.
       unreadNotificationsCountStream = Stream.value(0);
     }
   }
@@ -34,6 +32,6 @@ class SideBarFrontModel extends FlutterFlowModel<SideBarFrontWidget> {
   @override
   void dispose() {
     _countStreamSubscription?.cancel();
-    _controller?.close(); // Close the controller
+    _controller?.close();
   }
 }

@@ -20,6 +20,15 @@ class ApplyForJobModel extends FlutterFlowModel<ApplyForJobWidget> {
       FFUploadedFile(bytes: Uint8List.fromList([]));
   String uploadedFileUrl_uploadData27c = '';
 
+  // CV Selection State
+  String cvOption = 'profile'; // Default to 'profile'
+  String userUploadedCvUrl = '';
+  String userUploadedCvName = '';
+  FormFieldController<String>? cvOptionController;
+
+  // State for bookmark icon
+  bool isJobBookmarked = false;
+
   @override
   void initState(BuildContext context) {
     sideBarModel = createModel(context, () => SideBarModel());
